@@ -146,6 +146,10 @@ textarea{resize:vertical;line-height:1.5}
 .fcard-tools .mini{font-size:10.5px;padding:3px 7px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);border-radius:7px;cursor:pointer;font-family:inherit}
 .fcard-tools .mini:hover{border-color:var(--sage);color:var(--ink)}
 .fsel{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.fcard.out{background:var(--stage-2)}
+.fcard.out .pick{cursor:not-allowed}
+.fcard.out .nm{color:var(--ink-soft)}
+.fcard .oos{font-size:11px;line-height:1.4;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 9px;text-align:center}
 
 /* 印刷 */
 #print-area{display:none}
@@ -195,7 +199,7 @@ textarea{resize:vertical;line-height:1.5}
       <div class="fboard-head">
         <div>
           <h2 data-i18n="fb.title">入荷中の花から選ぶ</h2>
-          <div class="note" data-i18n="fb.note">使いたい花をタップで選んでください（複数OK）。各花の「写真」で、入荷した実物の写真に差し替えられます。</div>
+          <div class="note" data-i18n="fb.note">使いたい花をタップで選んでください（複数OK）。<br>写真のない花は、申し訳ございませんが現在入荷しておりません。</div>
         </div>
         <div class="fboard-actions">
           <span class="note" id="fb-count"></span>
@@ -417,9 +421,9 @@ textarea{resize:vertical;line-height:1.5}
       'om.note':'Requests / notes','om.note.ph':'e.g. add a message card / pick-up place',
       'btn.close':'Close','btn.print':'Print / save as PDF','btn.gmail':'Send by email (manual)','btn.send':'Send order',
       'fb.title':'Choose from flowers in stock',
-      'fb.note':'Tap the flowers you want (multiple OK). Use “Photo” on each flower to replace it with a photo of what actually arrived.',
+      'fb.note':'Tap the flowers you want (multiple OK).<br>We’re sorry — flowers without a photo are not in stock at the moment.',
       'fb.addlabel':'Add a flower','fb.newph':'Add a flower you have in stock (e.g. Scabiosa)','fb.add':'Add','fb.clear':'Clear selection','fb.done':'Use these flowers',
-      'fb.photo':'Photo','fb.ai':'AI',
+      'fb.photo':'Photo','fb.unset':'Remove','fb.oos':'Not in stock',
       'type.bouquet':'Bouquet','type.arrangement':'Arrangement','type.wedding':'Wedding flowers',
       'gen.bouquet':'Generate bouquet photo','gen.arrangement':'Generate arrangement photo','gen.wedding':'Generate decoration photo',
       'noun.bouquet':'bouquet','noun.arrangement':'arrangement','noun.wedding':'decoration',
@@ -431,7 +435,7 @@ textarea{resize:vertical;line-height:1.5}
       'err.gen':'Generation failed. Check your internet connection and try “Generate another” in a moment.',
       'ph.failed':'Could not generate',
       'card.bouquet':'{season} Bouquet',
-      'ts.saved.gallery':'Saved to the gallery.','ts.saved.photo':'Photo registered.',
+      'ts.saved.gallery':'Saved to the gallery.','ts.saved.photo':'Photo registered (now shown as in stock).',
       'ts.card.fail':'Could not create the card.','ts.fb.added':'Added.','ts.fb.name':'Please enter a flower name.',
       'ts.ai.made':'Sample photo created.','ts.ai.fail':'Could not create the sample photo. Please try again later.',
       'ts.full':'Storage is full. Please reduce the number of photos.',
@@ -907,29 +911,26 @@ textarea{resize:vertical;line-height:1.5}
       var fr=new FileReader();fr.onload=function(){img.src=fr.result;};fr.readAsDataURL(file);
     });
   }
-  function aiThumb(f,btn){
-    var old=btn.textContent;btn.textContent='…';btn.disabled=true;
-    var p='real photograph of a few fresh cut '+f.en+' stems as sold at a florist, natural colour, on a plain white background, soft daylight, true to life, visible petal texture, not an illustration, no text';
-    var url='https://image.pollinations.ai/prompt/'+encodeURIComponent(p)+'?width=512&height=512&nologo=true&seed='+Math.floor(Math.random()*1e9);
-    var img=new Image();img.crossOrigin='anonymous';
-    img.onload=function(){
-      try{
-        var cv=document.createElement('canvas');cv.width=420;cv.height=420;
-        cv.getContext('2d').drawImage(img,0,0,420,420);
-        f.photo=cv.toDataURL('image/jpeg',0.78);persistFlowers();renderBoard();toast((LANG==='en')?(fname(f)+' sample photo created.'):(f.jp+' の見本写真を作りました。'));
-      }catch(e){toast('写真を保存できませんでした。');btn.textContent=old;btn.disabled=false;}
-    };
-    img.onerror=function(){toast(L('見本写真を作れませんでした。少し時間をおいてお試しください。','ts.ai.fail'));btn.textContent=old;btn.disabled=false;};
-    img.src=url;
+  // 写真がある花＝入荷中、写真がない花＝入荷なし
+  function oosMessage(f){
+    return (LANG==='en')?('Sorry, '+fname(f)+' is not in stock at the moment.')
+                        :('申し訳ございません。「'+f.jp+'」は現在入荷しておりません。');
   }
   function renderBoard(){
     var g=$('fb-grid');g.innerHTML='';
+    // 入荷なしになった花は選択から外す
+    picked=picked.filter(function(id){var f=fById(id);return f&&f.photo;});
     flowers.forEach(function(f){
-      var c=document.createElement('div');c.className='fcard';
+      var inStock=!!f.photo;
+      var c=document.createElement('div');c.className='fcard'+(inStock?'':' out');
       c.setAttribute('aria-pressed',picked.indexOf(f.id)>=0?'true':'false');
       var pick=document.createElement('button');pick.type='button';pick.className='pick';
-      pick.innerHTML=(f.photo?('<img class="ph" src="'+f.photo+'" alt="">'):'<div class="noimg">🌸</div>')+'<span class="nm">'+esc(fname(f))+'</span>';
+      if(!inStock)pick.setAttribute('aria-disabled','true');
+      pick.innerHTML=(inStock?('<img class="ph" src="'+f.photo+'" alt="">')
+        :('<div class="noimg"><span class="oos">'+L('現在入荷なし','fb.oos')+'</span></div>'))
+        +'<span class="nm">'+esc(fname(f))+'</span>';
       pick.addEventListener('click',function(){
+        if(!f.photo){toast(oosMessage(f));return;}
         var i=picked.indexOf(f.id);
         if(i>=0)picked.splice(i,1);else picked.push(f.id);
         c.setAttribute('aria-pressed',i>=0?'false':'true');
@@ -939,8 +940,16 @@ textarea{resize:vertical;line-height:1.5}
       var tools=document.createElement('div');tools.className='fcard-tools';
       var bp=document.createElement('button');bp.type='button';bp.className='mini';bp.textContent=L('写真','fb.photo');
       bp.addEventListener('click',function(){photoTarget=f.id;$('fb-file').click();});
-      var ba=document.createElement('button');ba.type='button';ba.className='mini';ba.textContent='AI';
-      ba.addEventListener('click',function(){aiThumb(f,ba);});
+      tools.appendChild(bp);
+      if(inStock){
+        // 売り切れ・入荷終了のときは写真を外す（＝入荷なし表示に戻る）
+        var bo=document.createElement('button');bo.type='button';bo.className='mini';bo.textContent=L('外す','fb.unset');
+        bo.addEventListener('click',function(){
+          if(!confirm((LANG==='en')?('Remove the photo and mark '+fname(f)+' as out of stock?'):('「'+f.jp+'」の写真を外して「入荷なし」にしますか？')))return;
+          f.photo='';persistFlowers();renderBoard();fbCount();renderFsel();
+        });
+        tools.appendChild(bo);
+      }
       var bd=document.createElement('button');bd.type='button';bd.className='mini';bd.textContent='×';
       bd.addEventListener('click',function(){
         if(!confirm((LANG==='en')?('Remove '+fname(f)+' from the board?'):(f.jp+' を花材から削除しますか？')))return;
@@ -948,7 +957,7 @@ textarea{resize:vertical;line-height:1.5}
         var pi=picked.indexOf(f.id);if(pi>=0)picked.splice(pi,1);
         persistFlowers();renderBoard();fbCount();renderFsel();
       });
-      tools.appendChild(bp);tools.appendChild(ba);tools.appendChild(bd);
+      tools.appendChild(bd);
       c.appendChild(pick);c.appendChild(chk);c.appendChild(tools);
       g.appendChild(c);
     });
@@ -959,7 +968,7 @@ textarea{resize:vertical;line-height:1.5}
     var target=photoTarget;photoTarget=null;
     resizeSmall(f).then(function(src){
       if(!src){toast('写真を読み込めませんでした。');return;}
-      var fl=fById(target);if(fl){fl.photo=src;persistFlowers();renderBoard();toast(L('写真を登録しました。','ts.saved.photo'));}
+      var fl=fById(target);if(fl){fl.photo=src;persistFlowers();renderBoard();fbCount();renderFsel();toast(L('写真を登録しました（入荷中になりました）。','ts.saved.photo'));}
     });
   });
   function jpToEn(n){
