@@ -1130,55 +1130,41 @@ textarea{resize:vertical;line-height:1.5}
   /* ===== ChatGPTで高画質に作る（指示文を自動作成） =====
      このアプリの無料の画像AIでは写真レベルの花束は難しいため、
      選んだ花材・スタイルから ChatGPT 向けの指示文を作り、ChatGPT で画像を作ってもらう。 */
-  var WRAP_JA=['クラフト紙で包み、リボンで結ぶ','クラフト紙でラフに包む','上品な薄紙で包み、サテンのリボンで結ぶ','パステルカラーの薄紙で包む','和紙で包み、落ち着いた色合いに','アンティーク調。クラフト紙で包む','淡い色の薄紙を何枚も重ねて包み、サテンのリボンで結ぶ。ボリュームたっぷりに','少ない本数ですっきりと。シンプルな紙で包む'];
-  var WRAP_EN=['wrapped in kraft paper and tied with a ribbon','loosely wrapped in kraft paper','wrapped in elegant tissue paper with a satin ribbon','wrapped in pastel tissue paper','wrapped in Japanese washi paper with calm muted tones','antique style, wrapped in kraft paper','wrapped in several layers of pale tissue paper and tied with a satin ribbon, lush and voluminous','just a few stems, clean and simple, wrapped in plain paper'];
   function pickedJa(){return picked.map(function(id){var f=fById(id);return f?f.jp:'';}).filter(Boolean);}
   function selText(id){var s=$(id);return (s&&s.options[s.selectedIndex])?s.options[s.selectedIndex].textContent.trim():'';}
+  // 指示文は「何を作るか」だけ（ラッピング・撮影イメージ・条件は入れない）
   function buildGptPrompt(){
     var en=(LANG==='en'), t=gen.type, out=[];
     var fl=en?pickedEn().map(function(x){return x.replace(/\b\w/g,function(c){return c.toUpperCase();});}):pickedJa();
     var flTxt=fl.length?fl.join(en?', ':'、'):(en?'florist’s choice (e.g. roses, carnations, lisianthus, greenery)':'おまかせ（バラ、カーネーション、トルコキキョウ、グリーンなど）');
     var note=($('comment').value||'').trim();
     var main=$('mainflower').value?selText('mainflower'):'';
-    var wi=$('style').selectedIndex<0?0:$('style').selectedIndex;
     if(!en){
       if(t==='wedding'){
         out.push('結婚式の会場装飾を、プロのフローリストが実際に飾ったような「本物の写真」の画像で作ってください。','',
-          '【場所】'+selText('wplace'),'【テイスト】'+selText('wtaste'),'【使う花】'+flTxt,
-          '【撮影イメージ】披露宴会場。やわらかく明るい照明。上品で、盛りすぎない。花びらや葉の質感までリアルに。',
-          '【条件】人物は写さない。文字・ロゴ・透かしは入れない。横長（3:2）。');
+          '【場所】'+selText('wplace'),'【テイスト】'+selText('wtaste'),'【使う花】'+flTxt);
       }else if(t==='arrangement'){
         out.push('花屋さんが実際に作ったフラワーアレンジメントの「本物の写真」のような画像を作ってください。','',
-          '【器・スタイル】'+selText('arrstyle'),'【テイスト】'+selText('arrtaste'),'【使う花】'+flTxt+'。グリーンや小花も自然に添えて',
-          '【撮影イメージ】花屋の店内の木のテーブルの上。窓からの明るい自然光、背景はやわらかくぼかす。花びらの質感までリアルに。',
-          '【条件】人物や手は写さない。文字・ロゴ・透かしは入れない。正方形。');
+          '【器・スタイル】'+selText('arrstyle'),'【テイスト】'+selText('arrtaste'),'【使う花】'+flTxt);
       }else{
         out.push('花屋さんが実際に束ねた花束の「本物の写真」のような画像を作ってください。','',
-          '【使う花】'+flTxt+'。グリーンや小花も自然に添えて');
+          '【使う花】'+flTxt);
         if(main)out.push('【主役】'+main);
-        out.push('【スタイル】'+selText('style'),'【ラッピング】'+WRAP_JA[wi],
-          '【撮影イメージ】花屋の店先の木のテーブルに置いた花束。朝の明るい自然光、背景はやわらかくぼかす。花の大きさや向きに自然なばらつきがあり、花びらの質感までリアルに。',
-          '【条件】人物や手は写さない。文字・ロゴ・透かしは入れない。縦長（4:5）。');
+        out.push('【スタイル】'+selText('style'));
       }
       if(note)out.push('【ご要望】'+note);
     }else{
       if(t==='wedding'){
         out.push('Please create an image that looks like a real photograph of wedding venue flowers decorated by a professional event florist.','',
-          'Area: '+selText('wplace'),'Taste: '+selText('wtaste'),'Flowers: '+flTxt,
-          'Scene: a wedding reception hall, soft bright lighting, elegant and not overcrowded, lifelike petal and leaf texture.',
-          'Rules: no people, no text, logos or watermarks, landscape 3:2.');
+          'Area: '+selText('wplace'),'Taste: '+selText('wtaste'),'Flowers: '+flTxt);
       }else if(t==='arrangement'){
         out.push('Please create an image that looks like a real photograph of a flower arrangement made by a professional florist.','',
-          'Container / style: '+selText('arrstyle'),'Taste: '+selText('arrtaste'),'Flowers: '+flTxt+', with greenery and small filler flowers',
-          'Scene: on a wooden table inside a flower shop, bright natural window light, softly blurred background, lifelike petal texture.',
-          'Rules: no people or hands, no text, logos or watermarks, square.');
+          'Container / style: '+selText('arrstyle'),'Taste: '+selText('arrtaste'),'Flowers: '+flTxt);
       }else{
         out.push('Please create an image that looks like a real photograph of a hand-tied bouquet made by a professional florist.','',
-          'Flowers: '+flTxt+', with greenery and small filler flowers');
+          'Flowers: '+flTxt);
         if(main)out.push('Main flower: '+main);
-        out.push('Style: '+selText('style'),'Wrapping: '+WRAP_EN[wi],
-          'Scene: the bouquet placed on a rustic wooden table at the front of a flower shop, bright morning natural light, softly blurred background, natural variation in bloom size and direction, lifelike petal texture.',
-          'Rules: no people or hands, no text, logos or watermarks, portrait 4:5.');
+        out.push('Style: '+selText('style'));
       }
       if(note)out.push('Requests: '+note);
     }
