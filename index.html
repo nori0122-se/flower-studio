@@ -889,6 +889,15 @@ textarea{resize:vertical;line-height:1.5}
   var flowers=null;
   try{flowers=JSON.parse(localStorage.getItem(FKEY)||'null');}catch(e){flowers=null;}
   if(!flowers||!flowers.length){flowers=DEFAULT_FLOWERS.map(function(f,i){return {id:'f'+i,jp:f.jp,en:f.en,photo:''};});}
+  // 写真は2種類：この端末で入れた写真(localPhoto) と GitHub(content.json)の写真(sharedPhoto)。
+  // 表示に使うのは「端末の写真 → なければGitHubの写真」。
+  function normFlower(f){
+    if(f.localPhoto===undefined)f.localPhoto=(f.photo&&String(f.photo).indexOf('data:')===0)?f.photo:'';
+    if(f.sharedPhoto===undefined)f.sharedPhoto='';
+    f.photo=f.localPhoto||f.sharedPhoto||'';
+    return f;
+  }
+  flowers.forEach(normFlower);
   function persistFlowers(){try{localStorage.setItem(FKEY,JSON.stringify(flowers));}catch(e){toast('保存容量がいっぱいです。花材の写真を減らしてください。');}}
   var picked=[];
   function fById(id){for(var i=0;i<flowers.length;i++){if(flowers[i].id===id)return flowers[i];}return null;}
@@ -941,12 +950,12 @@ textarea{resize:vertical;line-height:1.5}
       var bp=document.createElement('button');bp.type='button';bp.className='mini';bp.textContent=L('写真','fb.photo');
       bp.addEventListener('click',function(){photoTarget=f.id;$('fb-file').click();});
       tools.appendChild(bp);
-      if(inStock){
+      if(f.localPhoto){
         // 売り切れ・入荷終了のときは写真を外す（＝入荷なし表示に戻る）
         var bo=document.createElement('button');bo.type='button';bo.className='mini';bo.textContent=L('外す','fb.unset');
         bo.addEventListener('click',function(){
           if(!confirm((LANG==='en')?('Remove the photo and mark '+fname(f)+' as out of stock?'):('「'+f.jp+'」の写真を外して「入荷なし」にしますか？')))return;
-          f.photo='';persistFlowers();renderBoard();fbCount();renderFsel();
+          f.localPhoto='';f.photo=f.sharedPhoto||'';persistFlowers();renderBoard();fbCount();renderFsel();
         });
         tools.appendChild(bo);
       }
@@ -968,7 +977,7 @@ textarea{resize:vertical;line-height:1.5}
     var target=photoTarget;photoTarget=null;
     resizeSmall(f).then(function(src){
       if(!src){toast('写真を読み込めませんでした。');return;}
-      var fl=fById(target);if(fl){fl.photo=src;persistFlowers();renderBoard();fbCount();renderFsel();toast(L('写真を登録しました（入荷中になりました）。','ts.saved.photo'));}
+      var fl=fById(target);if(fl){fl.localPhoto=src;fl.photo=src;persistFlowers();renderBoard();fbCount();renderFsel();toast(L('写真を登録しました（入荷中になりました）。','ts.saved.photo'));}
     });
   });
   function jpToEn(n){
@@ -1109,10 +1118,12 @@ textarea{resize:vertical;line-height:1.5}
       });
     }
     if(Array.isArray(d.flowers)&&d.flowers.length){
+      var localAll=flowers.slice();
       var localOnly=flowers.filter(function(f){return !f.shared;});
       var shared=d.flowers.map(function(f,i){
-        var prev=localOnly.filter(function(x){return x.jp===f.jp;})[0];
-        return {id:'s'+i,jp:f.jp,en:f.en||f.jp,photo:f.photo||(prev?prev.photo:'')||'',shared:true};
+        var prev=localAll.filter(function(x){return x.jp===f.jp;})[0];
+        return normFlower({id:'s'+i,jp:f.jp,en:f.en||f.jp,shared:true,
+          localPhoto:prev?(prev.localPhoto||''):'', sharedPhoto:f.photo||''});
       });
       var names={};shared.forEach(function(f){names[f.jp]=1;});
       flowers=shared.concat(localOnly.filter(function(f){return !names[f.jp];}));
