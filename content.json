@@ -1,0 +1,113 @@
+{
+  "_説明": "このファイルを編集すると、サイトの内容が全員分いっぺんに変わります。使い方は README.md を見てください。",
+  "order": {
+    "email": "mar30.shiori@gmail.com"
+  },
+  "texts": {
+    "ja": {},
+    "en": {}
+  },
+  "flowers": [
+    {
+      "jp": "バラ",
+      "en": "roses",
+      "photo": ""
+    },
+    {
+      "jp": "ガーベラ",
+      "en": "gerbera daisies",
+      "photo": ""
+    },
+    {
+      "jp": "ユリ",
+      "en": "lilies",
+      "photo": ""
+    },
+    {
+      "jp": "カーネーション",
+      "en": "carnations",
+      "photo": ""
+    },
+    {
+      "jp": "チューリップ",
+      "en": "tulips",
+      "photo": ""
+    },
+    {
+      "jp": "ひまわり",
+      "en": "sunflowers",
+      "photo": ""
+    },
+    {
+      "jp": "あじさい",
+      "en": "hydrangeas",
+      "photo": ""
+    },
+    {
+      "jp": "芍薬",
+      "en": "peonies",
+      "photo": ""
+    },
+    {
+      "jp": "ラナンキュラス",
+      "en": "ranunculus",
+      "photo": ""
+    },
+    {
+      "jp": "ダリア",
+      "en": "dahlias",
+      "photo": ""
+    },
+    {
+      "jp": "トルコキキョウ",
+      "en": "lisianthus",
+      "photo": ""
+    },
+    {
+      "jp": "かすみ草",
+      "en": "baby breath",
+      "photo": ""
+    },
+    {
+      "jp": "スイートピー",
+      "en": "sweet peas",
+      "photo": ""
+    },
+    {
+      "jp": "コスモス",
+      "en": "cosmos",
+      "photo": ""
+    },
+    {
+      "jp": "マム（菊）",
+      "en": "chrysanthemums",
+      "photo": ""
+    },
+    {
+      "jp": "アネモネ",
+      "en": "anemones",
+      "photo": ""
+    },
+    {
+      "jp": "ミモザ",
+      "en": "mimosa",
+      "photo": ""
+    },
+    {
+      "jp": "ラベンダー",
+      "en": "lavender",
+      "photo": ""
+    },
+    {
+      "jp": "ユーカリ",
+      "en": "eucalyptus greenery",
+      "photo": ""
+    },
+    {
+      "jp": "グリーン（葉物）",
+      "en": "mixed greenery",
+      "photo": ""
+    }
+  ],
+  "gallery": []
+}
