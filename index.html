@@ -121,8 +121,18 @@ textarea{resize:vertical;line-height:1.5}
 @media (max-width:560px){.of-grid{grid-template-columns:1fr}}
 .sheet-foot{display:flex;gap:9px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap;align-items:center}
 
-/* 花材ボード */
-.fb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:12px}
+.gpt-steps{margin:0 0 12px;padding-left:20px;font-size:13px;color:var(--ink-soft);line-height:1.8}
+#gpt-prompt{min-height:240px;font-size:13px;line-height:1.65}
+#to-chatgpt{margin-top:-6px}
+/* 花材ボード（上部・全幅） */
+.fboard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:20px;box-shadow:0 10px 30px -24px var(--shadow)}
+.fboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.fboard-head h2{margin:0 0 4px;font-family:var(--font-display);font-size:18px;color:var(--ink)}
+.fboard-actions{display:flex;align-items:center;gap:10px}
+.fb-addrow{display:flex;gap:8px;margin-top:14px;max-width:460px}
+.fb-addrow input{flex:1}
+.fb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px}
+@media (max-width:560px){.fb-grid{grid-template-columns:repeat(3,1fr);gap:8px}.fboard{padding:14px}}
 .fcard{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper);transition:.16s}
 .fcard:hover{border-color:var(--sage)}
 .fcard[aria-pressed="true"]{border-color:var(--sage-deep);box-shadow:0 0 0 2px var(--sage-deep)}
@@ -180,18 +190,35 @@ textarea{resize:vertical;line-height:1.5}
 
   <!-- ===== 生成モード ===== -->
   <section id="gen-panel">
+    <!-- ===== 花材ボード（入荷中の花・上部全幅） ===== -->
+    <div class="fboard">
+      <div class="fboard-head">
+        <div>
+          <h2 data-i18n="fb.title">入荷中の花から選ぶ</h2>
+          <div class="note" data-i18n="fb.note">使いたい花をタップで選んでください（複数OK）。各花の「写真」で、入荷した実物の写真に差し替えられます。</div>
+        </div>
+        <div class="fboard-actions">
+          <span class="note" id="fb-count"></span>
+          <button type="button" class="btn ghost sm" id="fb-clear" data-i18n="fb.clear">選択をクリア</button>
+        </div>
+      </div>
+      <div class="fb-grid" id="fb-grid"></div>
+      <div class="fb-addrow">
+        <input type="text" id="fb-new" data-i18n-ph="fb.newph" placeholder="入荷した花を追加（例：スカビオサ）">
+        <button type="button" class="btn ghost sm" id="fb-add" data-i18n="fb.add">追加</button>
+      </div>
+    </div>
+
     <div class="layout">
       <div class="panel">
         <div class="field"><div class="label" data-i18n="lbl.type">種類</div>
           <div id="types" style="display:flex;flex-wrap:wrap;gap:8px"></div>
         </div>
-        <div class="field"><div class="label" data-i18n="lbl.season">季節</div><div class="seasons" id="seasons"></div></div>
-        <div class="field"><div class="label" data-i18n="lbl.colors">色味（複数OK）</div><div class="chips" id="colors"></div></div>
 
         <div id="bouquet-opts" style="display:flex;flex-direction:column;gap:18px">
           <div class="field"><div class="label" data-i18n="lbl.mainflower">主役の花</div>
             <select id="mainflower">
-              <option value="" data-i18n="mf.auto">おまかせ（季節の花）</option>
+              <option value="" data-i18n="mf.auto">おまかせ</option>
               <option value="roses" data-i18n="mf.roses">バラ多め</option>
               <option value="gerbera daisies" data-i18n="mf.gerbera">ガーベラ多め</option>
               <option value="lilies" data-i18n="mf.lilies">ユリ多め</option>
@@ -204,14 +231,14 @@ textarea{resize:vertical;line-height:1.5}
           </div>
           <div class="field"><div class="label" data-i18n="lbl.style">雰囲気</div>
             <select id="style">
-              <option value="round hand-tied bouquet, kraft paper wrap, studio soft light, neutral background" data-i18n="st.round">ラウンドブーケ（定番）</option>
-              <option value="natural loose garden-style bouquet, kraft paper, natural window light" data-i18n="st.natural">ナチュラル（無造作）</option>
-              <option value="elegant luxury bouquet, satin ribbon, dark moody background, dramatic light" data-i18n="st.elegant">エレガント（高級感）</option>
-              <option value="cute compact bouquet, pastel tones, bright airy background" data-i18n="st.cute">キュート（明るい）</option>
-              <option value="japanese wafu style flower arrangement, washi paper, calm muted tones, wooden background" data-i18n="st.wafu">和風（和の花材）</option>
-              <option value="dried flower bouquet, antique dusty muted tones, rustic boho style" data-i18n="st.dried">ドライフラワー風</option>
-              <option value="large gorgeous abundant bouquet, lush, luxury florist" data-i18n="st.gorgeous">大きめ・ゴージャス</option>
-              <option value="minimal single-type bouquet, few stems, clean scandinavian style" data-i18n="st.minimal">ミニマル（少なめ）</option>
+              <option value="round dome shaped bouquet wrapped in kraft paper with a ribbon" data-i18n="st.round">ラウンドブーケ（定番）</option>
+              <option value="loose natural garden style bouquet wrapped in kraft paper" data-i18n="st.natural">ナチュラル（無造作）</option>
+              <option value="elegant luxury bouquet wrapped in soft paper with a satin ribbon" data-i18n="st.elegant">エレガント（高級感）</option>
+              <option value="small cute compact bouquet in soft pastel tones wrapped in pastel paper" data-i18n="st.cute">キュート（明るい）</option>
+              <option value="japanese style bouquet wrapped in washi paper, calm muted tones" data-i18n="st.wafu">和風（和の花材）</option>
+              <option value="dried flower bouquet in antique dusty muted tones, rustic" data-i18n="st.dried">ドライフラワー風</option>
+              <option value="large lush abundant bouquet with many stems" data-i18n="st.gorgeous">大きめ・ゴージャス</option>
+              <option value="minimal bouquet with only a few stems, clean and simple" data-i18n="st.minimal">ミニマル（少なめ）</option>
             </select>
           </div>
         </div>
@@ -226,9 +253,8 @@ textarea{resize:vertical;line-height:1.5}
           <div class="field"><div class="label" data-i18n="lbl.arrtaste">テイスト</div><select id="arrtaste"></select></div>
         </div>
 
-        <div class="field"><div class="label" data-i18n="lbl.flowers">花材（任意・複数OK）</div>
-          <button type="button" class="btn ghost sm" id="open-fb" data-i18n="btn.openfb">🌸 花材ボードから選ぶ</button>
-          <div class="fsel" id="fsel-view"></div>
+        <div class="field"><div class="label" data-i18n="lbl.flowers">選んだ花材</div>
+          <div class="fsel" id="fsel-view" style="margin-top:0"></div>
         </div>
 
         <div class="field"><div class="label" data-i18n="lbl.comment">ご要望・コメント（任意）</div>
@@ -237,11 +263,13 @@ textarea{resize:vertical;line-height:1.5}
         </div>
 
         <button class="btn primary" id="gen">写真を生成する</button>
+        <button type="button" class="btn ghost" id="to-chatgpt" data-i18n="btn.chatgpt">✨ ChatGPTで高画質に作る</button>
+        <div class="note" data-i18n="note.chatgpt">ChatGPTを使うと、実際の花屋さんのような写真レベルの画像が作れます（指示文はこのアプリが自動で作ります）。</div>
       </div>
 
       <div class="stage-wrap">
         <div class="stage" id="stage">
-          <div class="placeholder"><span class="em">🌷</span><span data-i18n="stage.hint">季節と色をえらんで<br>「花束の写真を生成する」を押してください</span></div>
+          <div class="placeholder"><span class="em">🌷</span><span data-i18n="stage.hint">上の一覧から花を選んで<br>「花束の写真を生成する」を押してください</span></div>
         </div>
         <div id="after" hidden>
           <div class="meta-in" style="margin-bottom:10px">
@@ -264,10 +292,6 @@ textarea{resize:vertical;line-height:1.5}
 
   <!-- ===== ギャラリーモード ===== -->
   <section id="gallery-panel" hidden>
-    <div class="filterbar">
-      <div class="frow"><span class="flabel" data-i18n="lbl.season">季節</span><div class="seasons" id="f-seasons" style="display:flex;flex-wrap:wrap;gap:7px"></div></div>
-      <div class="frow"><span class="flabel" data-i18n="lbl.color">色味</span><div class="chips" id="f-colors"></div></div>
-    </div>
     <div class="gtools">
       <span class="count" id="g-count"></span>
       <div class="spacer"></div>
@@ -319,28 +343,25 @@ textarea{resize:vertical;line-height:1.5}
   </div>
 </div>
 
-<!-- ===== 花材ボード ===== -->
-<div class="modal" id="fb-modal" hidden>
+<!-- ===== ChatGPTで高画質に作る ===== -->
+<div class="modal" id="gpt-modal" hidden>
   <div class="sheet">
     <div class="sheet-head">
-      <h2 data-i18n="fb.title">花材ボード</h2>
-      <button class="x" id="fb-close" aria-label="閉じる">×</button>
+      <h2 data-i18n="gpt.title">ChatGPTで高画質に作る</h2>
+      <button class="x" id="gpt-close" aria-label="閉じる">×</button>
     </div>
     <div class="sheet-body">
-      <div class="note" style="margin-bottom:12px" data-i18n="fb.note">使いたい花をタップで選択してください（複数OK）。「写真」でお店の実物写真を登録、「AI」で見本写真を自動作成できます。</div>
-      <div class="fb-grid" id="fb-grid"></div>
-      <div class="field" style="margin-top:18px">
-        <div class="label" data-i18n="fb.addlabel">花材を追加</div>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="fb-new" data-i18n-ph="fb.newph" placeholder="例：スカビオサ">
-          <button type="button" class="btn ghost sm" id="fb-add" style="white-space:nowrap" data-i18n="fb.add">追加</button>
-        </div>
-      </div>
+      <ol class="gpt-steps">
+        <li data-i18n="gpt.s1">「ChatGPTを開く」を押す（指示文が入った状態で開きます）</li>
+        <li data-i18n="gpt.s2">入っていなければ、入力欄に貼り付けて（⌘V）送信</li>
+        <li data-i18n="gpt.s3">できた画像を保存し、「ギャラリー」→「手持ちの写真を追加」で取り込めます</li>
+      </ol>
+      <textarea id="gpt-prompt" rows="12" readonly></textarea>
     </div>
     <div class="sheet-foot">
-      <span class="note" id="fb-count" style="margin-right:auto"></span>
-      <button type="button" class="btn ghost sm" id="fb-clear" data-i18n="fb.clear">選択をクリア</button>
-      <button type="button" class="btn primary sm" id="fb-done" data-i18n="fb.done">この花材で作る</button>
+      <button type="button" class="btn ghost sm" id="gpt-cancel" data-i18n="btn.close">閉じる</button>
+      <button type="button" class="btn ghost sm" id="gpt-copy" data-i18n="gpt.copy">指示文をコピー</button>
+      <button type="button" class="btn primary sm" id="gpt-open" data-i18n="gpt.open">ChatGPTを開く</button>
     </div>
   </div>
 </div>
@@ -369,8 +390,8 @@ textarea{resize:vertical;line-height:1.5}
       'lbl.mainflower':'Main flower','lbl.style':'Style',
       'lbl.wplace':'Area to decorate','lbl.wtaste':'Taste',
       'lbl.arrstyle':'Container / style','lbl.arrtaste':'Taste',
-      'lbl.flowers':'Flowers (optional, multiple OK)','lbl.comment':'Requests / notes (optional)',
-      'mf.auto':'Leave it to us (seasonal)','mf.roses':'More roses','mf.gerbera':'More gerberas','mf.lilies':'More lilies',
+      'lbl.flowers':'Selected flowers','lbl.comment':'Requests / notes (optional)',
+      'mf.auto':'Leave it to us','mf.roses':'More roses','mf.gerbera':'More gerberas','mf.lilies':'More lilies',
       'mf.carnations':'More carnations','mf.tulips':'More tulips','mf.sunflowers':'More sunflowers',
       'mf.hydrangeas':'More hydrangeas','mf.peonies':'More peonies',
       'st.round':'Round bouquet (classic)','st.natural':'Natural (loose)','st.elegant':'Elegant (luxury)',
@@ -379,7 +400,7 @@ textarea{resize:vertical;line-height:1.5}
       'btn.openfb':'🌸 Choose from flower board',
       'ph.comment':'e.g. more roses / add blue flowers / red ribbon / smaller / for a birthday',
       'note.comment':'We adjust the design to your request (common Japanese words are recognised automatically).',
-      'stage.hint':'Pick a season and colors,<br>then press “Generate photo”.',
+      'stage.hint':'Pick flowers from the list above,<br>then press “Generate bouquet photo”.',
       'ph.title':'Product name (e.g. Seasonal bouquet)','ph.price':'Price (e.g. $30)',
       'btn.regen':'Generate another','btn.saveimg':'Save image','btn.savecard':'Save customer card',
       'btn.togallery':'Save to gallery','btn.toorder':'Create order form',
@@ -395,14 +416,14 @@ textarea{resize:vertical;line-height:1.5}
       'om.use':'Occasion','om.use.ph':'e.g. birthday gift',
       'om.note':'Requests / notes','om.note.ph':'e.g. add a message card / pick-up place',
       'btn.close':'Close','btn.print':'Print / save as PDF','btn.gmail':'Send by email (manual)','btn.send':'Send order',
-      'fb.title':'Flower board',
-      'fb.note':'Tap the flowers you want (multiple OK). Use “Photo” to register your own shop photo, or “AI” to create a sample image.',
-      'fb.addlabel':'Add a flower','fb.newph':'e.g. Scabiosa','fb.add':'Add','fb.clear':'Clear selection','fb.done':'Use these flowers',
+      'fb.title':'Choose from flowers in stock',
+      'fb.note':'Tap the flowers you want (multiple OK). Use “Photo” on each flower to replace it with a photo of what actually arrived.',
+      'fb.addlabel':'Add a flower','fb.newph':'Add a flower you have in stock (e.g. Scabiosa)','fb.add':'Add','fb.clear':'Clear selection','fb.done':'Use these flowers',
       'fb.photo':'Photo','fb.ai':'AI',
       'type.bouquet':'Bouquet','type.arrangement':'Arrangement','type.wedding':'Wedding flowers',
       'gen.bouquet':'Generate bouquet photo','gen.arrangement':'Generate arrangement photo','gen.wedding':'Generate decoration photo',
       'noun.bouquet':'bouquet','noun.arrangement':'arrangement','noun.wedding':'decoration',
-      'fsel.none':'Not selected (seasonal mix)','fb.hint':'Tap to choose flowers','fb.selected':'{n} selected',
+      'fsel.none':'None selected (a classic mix will be used)','fb.hint':'Tap to choose flowers','fb.selected':'{n} selected',
       'g.count':'{n} items','g.all':'All',
       'gc.card':'Save card','gc.order':'Order form','gc.del':'Delete','gc.season':'Season','gc.color':'Color',
       'gc.titleph':'Product name','gc.priceph':'Price',
@@ -413,7 +434,16 @@ textarea{resize:vertical;line-height:1.5}
       'ts.saved.gallery':'Saved to the gallery.','ts.saved.photo':'Photo registered.',
       'ts.card.fail':'Could not create the card.','ts.fb.added':'Added.','ts.fb.name':'Please enter a flower name.',
       'ts.ai.made':'Sample photo created.','ts.ai.fail':'Could not create the sample photo. Please try again later.',
-      'ts.full':'Storage is full. Please reduce the number of photos.'
+      'ts.full':'Storage is full. Please reduce the number of photos.',
+      'btn.chatgpt':'✨ Create high-quality image in ChatGPT',
+      'note.chatgpt':'ChatGPT can create photo-quality images like a real florist’s work (this app writes the instructions for you).',
+      'gpt.title':'Create a high-quality image in ChatGPT',
+      'gpt.s1':'Press “Open ChatGPT” (it opens with the instructions filled in)',
+      'gpt.s2':'If the box is empty, paste (⌘V) and send',
+      'gpt.s3':'Save the image, then import it via Gallery → “Add your own photos”',
+      'gpt.copy':'Copy instructions','gpt.open':'Open ChatGPT',
+      'gpt.copied':'Instructions copied.','gpt.copyfail':'Could not copy. Please select the text and copy it.',
+      'gpt.opened':'ChatGPT opened (instructions copied too).'
     }
   };
   function t(key,vars){
@@ -543,21 +573,7 @@ textarea{resize:vertical;line-height:1.5}
   ARRTASTE.forEach(function(p,i){var o=document.createElement('option');o.value=i;o.textContent=p.l;$('arrtaste').appendChild(o);});
   $('gen').textContent='花束の写真を生成する';
 
-  var sEl=$('seasons');
-  SEASONS.forEach(function(s){
-    var b=document.createElement('button');b.className='season';b.type='button';b.textContent=s.l;
-    b.setAttribute('aria-pressed',gen.season===s.k?'true':'false');
-    b.addEventListener('click',function(){gen.season=s.k;Array.prototype.forEach.call(sEl.children,function(c,i){c.setAttribute('aria-pressed',SEASONS[i].k===s.k?'true':'false');});});
-    sEl.appendChild(b);
-  });
-  var cEl=$('colors');
-  PALETTE.forEach(function(p){
-    var b=document.createElement('button');b.className='chip';b.type='button';
-    b.innerHTML='<span class="dot" style="background:'+p.c+'"></span>'+p.n;
-    b.setAttribute('aria-pressed',gen.colors.indexOf(p.n)>=0?'true':'false');
-    b.addEventListener('click',function(){var i=gen.colors.indexOf(p.n);if(i>=0)gen.colors.splice(i,1);else gen.colors.push(p.n);b.setAttribute('aria-pressed',i>=0?'false':'true');});
-    cEl.appendChild(b);
-  });
+  // 季節・色味の選択はなくし、花材ボードで選んだ花で作る
 
   // コメント欄（ご要望）→ 英語ヒントに変換して反映
   var JPEN=[
@@ -599,41 +615,43 @@ textarea{resize:vertical;line-height:1.5}
   }
   function withExtra(p){ var e=commentEn(); return e? (p+', '+e) : p; }
 
+  // 実際の花屋の花束写真に近づけるための共通の撮影・質感の指示
+  var PHOTO_REAL='soft natural window light, shallow depth of field, shot on a 50mm lens, true to life colours, visible petal texture, real photograph, not an illustration, not a 3d render, no text';
+  function flowerList(){
+    var pf=pickedEn();
+    return pf.length?pf.join(', '):'roses, ranunculus, lisianthus, spray roses and seasonal filler flowers';
+  }
   function buildPrompt(){
-    var s=SEASONS.filter(function(x){return x.k===gen.season;})[0];
-    var cs=gen.colors.map(function(n){return colorEn[n];});
-    var colorTxt=cs.length?cs.join(' and ')+' toned':'softly mixed';
-    var pf=pickedEn(),pfList=pf.join(', ');
+    var fl=flowerList();
     if(gen.type==='wedding'){
       var place=WPLACE[+$('wplace').value]||WPLACE[0];
       var taste=WTASTE[+$('wtaste').value]||WTASTE[0];
-      return withExtra('professional photorealistic photograph of a Japanese wedding reception, '+place.en+
-        ', decorated with a modest amount of '+colorTxt+' flowers, '+(pf.length?('made with '+pfList):('seasonal flowers such as '+s.flowers))+', '+taste.en+
-        ', simple minimal and elegant, tasteful restrained arrangement with negative space, not overcrowded, few flowers, '+
-        'elegant banquet hall venue, professional event floristry, high detail, realistic photography, sharp focus, no text, no people');
+      return withExtra('real photograph of wedding floral decoration made by a professional event florist, '+place.en+
+        ', using '+fl+' with foliage, '+taste.en+', tasteful and restrained, not overcrowded, elegant banquet hall, '+PHOTO_REAL+', no people');
     }
     if(gen.type==='arrangement'){
       var ast=ARRSTYLE[+$('arrstyle').value]||ARRSTYLE[0];
       var att=ARRTASTE[+$('arrtaste').value]||ARRTASTE[0];
-      return withExtra('professional photorealistic photograph of a beautiful fresh '+colorTxt+' flower arrangement for a florist shop, '+
-        ast.en+', '+(pf.length?('made with '+pfList):(s.en+' seasonal flowers such as '+s.flowers))+', '+att.en+
-        ', soft neutral background, high detail, realistic photography, sharp focus, no text');
+      return withExtra('real photograph of a flower arrangement made by a professional florist, '+ast.en+
+        ', arranged with '+fl+' and fresh foliage, natural asymmetry, varied bloom sizes, '+att.en+', on a plain neutral background, '+PHOTO_REAL);
     }
     var main=$('mainflower').value;
-    var flowerPart=pf.length
-      ? ('made with '+pfList+(main?(', featuring plenty of '+main):''))
-      : (main? ('featuring plenty of '+main+', with '+s.flowers) : ('seasonal flowers such as '+s.flowers));
-    return withExtra('professional photorealistic photograph of a beautiful fresh '+colorTxt+' flower bouquet for a florist shop, '+
-      s.en+' season, '+flowerPart+', '+$('style').value+', high detail, realistic photography, sharp focus, no text');
+    return withExtra('real photograph of a hand-tied flower bouquet made by a professional florist, made with '+fl+
+      (main?(', featuring plenty of '+main):'')+
+      ', mixed with eucalyptus and filler greenery, spiral stem construction gathered at a binding point, stems visible below the bouquet, '+
+      'natural asymmetry, varied bloom sizes, '+$('style').value+', the bouquet lying on a rustic wooden table in a flower shop, product photo, no people, no hands, '+PHOTO_REAL);
   }
-  // カード見出し・カテゴリ
+  // カード見出し（選んだ最初の花の名前で）
   function curEyebrow(){
-    if(gen.type==='wedding'){return (WPLACE[+$('wplace').value]||WPLACE[0]).eb;}
-    if(gen.type==='arrangement'){return (ARRSTYLE[+$('arrstyle').value]||ARRSTYLE[0]).eb;}
-    return (LANG==='en')?(seasonLabelEn[gen.season]+' Bouquet'):(seasonLabel[gen.season]+'の花束');
+    if(gen.type==='wedding'){var w=WPLACE[+$('wplace').value]||WPLACE[0];return (LANG==='en')?w.ebe:w.eb;}
+    if(gen.type==='arrangement'){var a=ARRSTYLE[+$('arrstyle').value]||ARRSTYLE[0];return (LANG==='en')?a.ebe:a.eb;}
+    var f=picked.length?fById(picked[0]):null;
+    if(LANG==='en')return f?(fname(f)+' Bouquet'):'Original Bouquet';
+    return f?(f.jp+'のブーケ'):'オリジナルブーケ';
   }
   function buildUrl(prompt,seed){
-    return 'https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=1024&height=1024&nologo=true&model=flux&seed='+seed;
+    // ※ Pollinationsの現行モデルは sana のみ（flux指定は無効になったため外す）
+    return 'https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=1024&height=1024&nologo=true&seed='+seed;
   }
   function showError(m){$('errbox').innerHTML=m?('<div class="err">'+m+'</div>'):'';}
 
@@ -643,23 +661,36 @@ textarea{resize:vertical;line-height:1.5}
     var noun=gen.type==='wedding'?'装飾':(gen.type==='arrangement'?'アレンジメント':'花束');
     var nounL=L(noun,'noun.'+gen.type);
     $('stage').innerHTML='<div class="placeholder"><div class="spinner"></div>'+((LANG==='en')?('AI is creating your '+nounL+'…<br>(a few seconds to 30s)'):('AIが'+nounL+'を生成中です…<br>（数秒〜30秒ほど）'))+'</div>';
-    var seed=Math.floor(Math.random()*1e9);
-    var url=buildUrl(buildPrompt(),seed);
-    var img=new Image();img.crossOrigin='anonymous';img.alt='生成された'+noun;
-    img.onload=function(){
-      gen.lastSrc=url;gen.lastSeasons=[gen.season];gen.lastColors=gen.colors.slice();
-      gen.lastCategory=gen.type;gen.lastEyebrow=curEyebrow();
-      $('stage').innerHTML='';$('stage').appendChild(img);
-      img.addEventListener('click',function(){openLb(url);});
-      $('after').hidden=false;busy=false;$('gen').disabled=false;
-      bumpGenCount();
-    };
-    img.onerror=function(){
-      $('stage').innerHTML='<div class="placeholder"><span class="em">🥀</span>生成できませんでした</div>';
-      showError('生成に失敗しました。ネット接続を確認し、少し時間をおいて「別の写真を生成」でお試しください。（このファイルはブラウザで直接開いてお使いください）');
-      busy=false;$('gen').disabled=false;
-    };
-    img.src=url;
+    var prompt=buildPrompt();
+    var MAX_TRY=4, attempt=0;
+    // 無料枠は混雑すると一時的に失敗（402）するため、間隔をあけて自動で再試行する
+    function tryOnce(){
+      attempt++;
+      var seed=Math.floor(Math.random()*1e9);
+      var url=buildUrl(prompt,seed);
+      var img=new Image();img.crossOrigin='anonymous';img.alt='生成された'+noun;
+      img.onload=function(){
+        gen.lastSrc=url;gen.lastSeasons=[gen.season];gen.lastColors=gen.colors.slice();
+        gen.lastCategory=gen.type;gen.lastEyebrow=curEyebrow();
+        $('stage').innerHTML='';$('stage').appendChild(img);
+        img.addEventListener('click',function(){openLb(url);});
+        $('after').hidden=false;busy=false;$('gen').disabled=false;
+        bumpGenCount();
+      };
+      img.onerror=function(){
+        if(attempt<MAX_TRY){
+          var ph=$('stage').querySelector('.placeholder');
+          if(ph)ph.innerHTML='<div class="spinner"></div>'+((LANG==='en')?('Busy, retrying… ('+attempt+'/'+(MAX_TRY-1)+')'):('混み合っています。再試行中…（'+attempt+'/'+(MAX_TRY-1)+'）'));
+          setTimeout(tryOnce,6000*attempt);
+          return;
+        }
+        $('stage').innerHTML='<div class="placeholder"><span class="em">🥀</span>'+((LANG==='en')?'Could not generate':'生成できませんでした')+'</div>';
+        showError((LANG==='en')?'The image service is busy. Please wait a minute and press “Generate another”.':'画像サービスが混み合っています。1分ほど待ってから「別の写真を生成」を押してください。');
+        busy=false;$('gen').disabled=false;
+      };
+      img.src=url;
+    }
+    tryOnce();
   }
   $('gen').addEventListener('click',generate);
   $('regen').addEventListener('click',generate);
@@ -862,7 +893,7 @@ textarea{resize:vertical;line-height:1.5}
 
   function renderFsel(){
     var el=$('fsel-view');
-    if(!picked.length){el.innerHTML='<span class="note">'+L('未選択（季節のおまかせで生成します）','fsel.none')+'</span>';return;}
+    if(!picked.length){el.innerHTML='<span class="note">'+L('未選択（定番の花で作ります）','fsel.none')+'</span>';return;}
     el.innerHTML=picked.map(function(id){var f=fById(id);return f?('<span class="chip sm" aria-pressed="true" style="pointer-events:none">'+esc(fname(f))+'</span>'):'';}).join('');
   }
   function fbCount(){$('fb-count').textContent=picked.length?((LANG==='en')?(picked.length+' selected'):(picked.length+'種類を選択中')):L('タップで花を選んでください','fb.hint');}
@@ -878,8 +909,8 @@ textarea{resize:vertical;line-height:1.5}
   }
   function aiThumb(f,btn){
     var old=btn.textContent;btn.textContent='…';btn.disabled=true;
-    var p='a single fresh '+f.en+', flower shop studio photo, plain white background, centered, high detail, no text';
-    var url='https://image.pollinations.ai/prompt/'+encodeURIComponent(p)+'?width=512&height=512&nologo=true&model=flux&seed='+Math.floor(Math.random()*1e9);
+    var p='real photograph of a few fresh cut '+f.en+' stems as sold at a florist, natural colour, on a plain white background, soft daylight, true to life, visible petal texture, not an illustration, no text';
+    var url='https://image.pollinations.ai/prompt/'+encodeURIComponent(p)+'?width=512&height=512&nologo=true&seed='+Math.floor(Math.random()*1e9);
     var img=new Image();img.crossOrigin='anonymous';
     img.onload=function(){
       try{
@@ -902,7 +933,7 @@ textarea{resize:vertical;line-height:1.5}
         var i=picked.indexOf(f.id);
         if(i>=0)picked.splice(i,1);else picked.push(f.id);
         c.setAttribute('aria-pressed',i>=0?'false':'true');
-        fbCount();
+        fbCount();renderFsel();
       });
       var chk=document.createElement('span');chk.className='chk';chk.textContent='✓';
       var tools=document.createElement('div');tools.className='fcard-tools';
@@ -915,7 +946,7 @@ textarea{resize:vertical;line-height:1.5}
         if(!confirm((LANG==='en')?('Remove '+fname(f)+' from the board?'):(f.jp+' を花材から削除しますか？')))return;
         var i=flowers.indexOf(f);if(i>=0)flowers.splice(i,1);
         var pi=picked.indexOf(f.id);if(pi>=0)picked.splice(pi,1);
-        persistFlowers();renderBoard();fbCount();
+        persistFlowers();renderBoard();fbCount();renderFsel();
       });
       tools.appendChild(bp);tools.appendChild(ba);tools.appendChild(bd);
       c.appendChild(pick);c.appendChild(chk);c.appendChild(tools);
@@ -941,37 +972,14 @@ textarea{resize:vertical;line-height:1.5}
     flowers.push({id:'f'+Date.now().toString(36),jp:n,en:jpToEn(n),photo:''});
     $('fb-new').value='';persistFlowers();renderBoard();toast((LANG==='en')?(n+' added.'):(n+' を追加しました。'));
   });
-  function openFB(){renderBoard();fbCount();$('fb-modal').hidden=false;$('fb-modal').classList.add('open');}
-  function closeFB(){$('fb-modal').classList.remove('open');$('fb-modal').hidden=true;renderFsel();}
-  $('open-fb').addEventListener('click',openFB);
-  $('fb-close').addEventListener('click',closeFB);
-  $('fb-done').addEventListener('click',closeFB);
-  $('fb-clear').addEventListener('click',function(){picked=[];renderBoard();fbCount();});
-  $('fb-modal').addEventListener('click',function(e){if(e.target===$('fb-modal'))closeFB();});
-  renderFsel();
+  // 花材ボードは画面上部に常に表示
+  $('fb-clear').addEventListener('click',function(){picked=[];renderBoard();fbCount();renderFsel();});
+  $('fb-new').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();$('fb-add').click();}});
+  renderBoard();fbCount();renderFsel();
 
   /* ===== ギャラリーモード ===== */
-  var filter={season:'all',colors:[]};
-  var fsEl=$('f-seasons');
-  [{k:'all',l:'すべて'}].concat(SEASONS).forEach(function(s){
-    var b=document.createElement('button');b.className='season sm';b.type='button';b.textContent=s.l;
-    b.setAttribute('aria-pressed',filter.season===s.k?'true':'false');
-    b.addEventListener('click',function(){filter.season=s.k;Array.prototype.forEach.call(fsEl.children,function(c){c.setAttribute('aria-pressed','false');});b.setAttribute('aria-pressed','true');renderGallery();});
-    fsEl.appendChild(b);
-  });
-  var fcEl=$('f-colors');
-  PALETTE.forEach(function(p){
-    var b=document.createElement('button');b.className='chip sm';b.type='button';
-    b.innerHTML='<span class="dot" style="background:'+p.c+'"></span>'+p.n;
-    b.setAttribute('aria-pressed','false');
-    b.addEventListener('click',function(){var i=filter.colors.indexOf(p.n);if(i>=0)filter.colors.splice(i,1);else filter.colors.push(p.n);b.setAttribute('aria-pressed',i>=0?'false':'true');renderGallery();});
-    fcEl.appendChild(b);
-  });
-  function matches(item){
-    var okS=filter.season==='all'||(item.seasons&&item.seasons.indexOf(filter.season)>=0);
-    var okC=filter.colors.length===0||(item.colors&&item.colors.some(function(c){return filter.colors.indexOf(c)>=0;}));
-    return okS&&okC;
-  }
+  // 季節・色味での絞り込みはなくし、全件を表示
+  function matches(item){return true;}
   function esc(s){return String(s).replace(/[&<>"]/g,function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
 
   function renderGallery(){
@@ -995,27 +1003,6 @@ textarea{resize:vertical;line-height:1.5}
       pi.addEventListener('input',function(){item.price=pi.value;persist();});
       if(item.shared){ti.disabled=true;pi.disabled=true;}
       row.appendChild(ti);row.appendChild(pi);body.appendChild(row);
-      // 季節
-      var sw=document.createElement('div');sw.innerHTML='<div class="ft">'+L('季節','lbl.season')+'</div>';
-      var sc=document.createElement('div');sc.className='chips';
-      SEASONS.forEach(function(s){
-        var b=document.createElement('button');b.className='chip sm';b.type='button';b.textContent=(LANG==='en')?s.le:s.l;
-        b.setAttribute('aria-pressed',(item.seasons||[]).indexOf(s.k)>=0?'true':'false');
-        b.addEventListener('click',function(){item.seasons=item.seasons||[];var i=item.seasons.indexOf(s.k);if(i>=0)item.seasons.splice(i,1);else item.seasons.push(s.k);b.setAttribute('aria-pressed',i>=0?'false':'true');persist();});
-        sc.appendChild(b);
-      });
-      sw.appendChild(sc);body.appendChild(sw);
-      // 色
-      var cw=document.createElement('div');cw.innerHTML='<div class="ft">'+L('色味','lbl.color')+'</div>';
-      var cc=document.createElement('div');cc.className='chips';
-      PALETTE.forEach(function(p){
-        var b=document.createElement('button');b.className='chip sm';b.type='button';
-        b.innerHTML='<span class="dot" style="background:'+p.c+'"></span>'+((LANG==='en')?p.ne:p.n);
-        b.setAttribute('aria-pressed',(item.colors||[]).indexOf(p.n)>=0?'true':'false');
-        b.addEventListener('click',function(){item.colors=item.colors||[];var i=item.colors.indexOf(p.n);if(i>=0)item.colors.splice(i,1);else item.colors.push(p.n);b.setAttribute('aria-pressed',i>=0?'false':'true');persist();});
-        cc.appendChild(b);
-      });
-      cw.appendChild(cc);body.appendChild(cw);
       // 操作
       var acts=document.createElement('div');acts.className='acts';
       var cardBtn=document.createElement('button');cardBtn.className='btn primary sm';cardBtn.textContent=L('カード保存','gc.card');
@@ -1030,7 +1017,6 @@ textarea{resize:vertical;line-height:1.5}
       acts.appendChild(cardBtn);acts.appendChild(orderBtn);
       if(!item.shared)acts.appendChild(del);
       body.appendChild(acts);
-      if(item.shared){sw.style.opacity='.55';sw.style.pointerEvents='none';cw.style.opacity='.55';cw.style.pointerEvents='none';}
       c.appendChild(body);g.appendChild(c);
     });
   }
@@ -1088,12 +1074,6 @@ textarea{resize:vertical;line-height:1.5}
     Array.prototype.forEach.call($('types').children,function(c,i){
       if(TYPES[i])c.textContent=en?(I18N.en['type.'+TYPES[i].k]||TYPES[i].l):TYPES[i].l;
     });
-    // 季節
-    Array.prototype.forEach.call($('seasons').children,function(c,i){if(SEASONS[i])c.textContent=en?SEASONS[i].le:SEASONS[i].l;});
-    // 色味
-    Array.prototype.forEach.call($('colors').children,function(c,i){
-      if(PALETTE[i])c.innerHTML='<span class="dot" style="background:'+PALETTE[i].c+'"></span>'+(en?PALETTE[i].ne:PALETTE[i].n);
-    });
     // セレクト
     [['wplace',WPLACE],['wtaste',WTASTE],['arrstyle',ARRSTYLE],['arrtaste',ARRTASTE]].forEach(function(pair){
       var sel=$(pair[0]);if(!sel)return;
@@ -1101,20 +1081,7 @@ textarea{resize:vertical;line-height:1.5}
     });
     // 生成ボタン
     $('gen').textContent=en?(I18N.en['gen.'+gen.type]||GENLABEL[gen.type]):GENLABEL[gen.type];
-    // ギャラリーのフィルタ
-    if($('f-seasons')){
-      Array.prototype.forEach.call($('f-seasons').children,function(c,i){
-        if(i===0)c.textContent=en?'All':'すべて';
-        else if(SEASONS[i-1])c.textContent=en?SEASONS[i-1].le:SEASONS[i-1].l;
-      });
-    }
-    if($('f-colors')){
-      Array.prototype.forEach.call($('f-colors').children,function(c,i){
-        if(PALETTE[i])c.innerHTML='<span class="dot" style="background:'+PALETTE[i].c+'"></span>'+(en?PALETTE[i].ne:PALETTE[i].n);
-      });
-    }
-    renderFsel();
-    if(!$('fb-modal').hidden){renderBoard();fbCount();}
+    renderFsel();renderBoard();fbCount();
     if(!$('gallery-panel').hidden)renderGallery();
   }
 
@@ -1148,8 +1115,7 @@ textarea{resize:vertical;line-height:1.5}
       }).filter(function(it){return it.src;});
     }
     applyLang();
-    renderFsel();
-    if($('fb-modal')&&!$('fb-modal').hidden)renderBoard();
+    renderFsel();renderBoard();fbCount();
     if($('gallery-panel')&&!$('gallery-panel').hidden)renderGallery();
   }
   function loadShared(){
@@ -1160,6 +1126,86 @@ textarea{resize:vertical;line-height:1.5}
         .catch(function(){});
     }catch(e){}
   }
+
+  /* ===== ChatGPTで高画質に作る（指示文を自動作成） =====
+     このアプリの無料の画像AIでは写真レベルの花束は難しいため、
+     選んだ花材・スタイルから ChatGPT 向けの指示文を作り、ChatGPT で画像を作ってもらう。 */
+  var WRAP_JA=['クラフト紙で包み、リボンで結ぶ','クラフト紙でラフに包む','上品な薄紙で包み、サテンのリボンで結ぶ','パステルカラーの薄紙で包む','和紙で包み、落ち着いた色合いに','アンティーク調。クラフト紙で包む','淡い色の薄紙を何枚も重ねて包み、サテンのリボンで結ぶ。ボリュームたっぷりに','少ない本数ですっきりと。シンプルな紙で包む'];
+  var WRAP_EN=['wrapped in kraft paper and tied with a ribbon','loosely wrapped in kraft paper','wrapped in elegant tissue paper with a satin ribbon','wrapped in pastel tissue paper','wrapped in Japanese washi paper with calm muted tones','antique style, wrapped in kraft paper','wrapped in several layers of pale tissue paper and tied with a satin ribbon, lush and voluminous','just a few stems, clean and simple, wrapped in plain paper'];
+  function pickedJa(){return picked.map(function(id){var f=fById(id);return f?f.jp:'';}).filter(Boolean);}
+  function selText(id){var s=$(id);return (s&&s.options[s.selectedIndex])?s.options[s.selectedIndex].textContent.trim():'';}
+  function buildGptPrompt(){
+    var en=(LANG==='en'), t=gen.type, out=[];
+    var fl=en?pickedEn().map(function(x){return x.replace(/\b\w/g,function(c){return c.toUpperCase();});}):pickedJa();
+    var flTxt=fl.length?fl.join(en?', ':'、'):(en?'florist’s choice (e.g. roses, carnations, lisianthus, greenery)':'おまかせ（バラ、カーネーション、トルコキキョウ、グリーンなど）');
+    var note=($('comment').value||'').trim();
+    var main=$('mainflower').value?selText('mainflower'):'';
+    var wi=$('style').selectedIndex<0?0:$('style').selectedIndex;
+    if(!en){
+      if(t==='wedding'){
+        out.push('結婚式の会場装飾を、プロのフローリストが実際に飾ったような「本物の写真」の画像で作ってください。','',
+          '【場所】'+selText('wplace'),'【テイスト】'+selText('wtaste'),'【使う花】'+flTxt,
+          '【撮影イメージ】披露宴会場。やわらかく明るい照明。上品で、盛りすぎない。花びらや葉の質感までリアルに。',
+          '【条件】人物は写さない。文字・ロゴ・透かしは入れない。横長（3:2）。');
+      }else if(t==='arrangement'){
+        out.push('花屋さんが実際に作ったフラワーアレンジメントの「本物の写真」のような画像を作ってください。','',
+          '【器・スタイル】'+selText('arrstyle'),'【テイスト】'+selText('arrtaste'),'【使う花】'+flTxt+'。グリーンや小花も自然に添えて',
+          '【撮影イメージ】花屋の店内の木のテーブルの上。窓からの明るい自然光、背景はやわらかくぼかす。花びらの質感までリアルに。',
+          '【条件】人物や手は写さない。文字・ロゴ・透かしは入れない。正方形。');
+      }else{
+        out.push('花屋さんが実際に束ねた花束の「本物の写真」のような画像を作ってください。','',
+          '【使う花】'+flTxt+'。グリーンや小花も自然に添えて');
+        if(main)out.push('【主役】'+main);
+        out.push('【スタイル】'+selText('style'),'【ラッピング】'+WRAP_JA[wi],
+          '【撮影イメージ】花屋の店先の木のテーブルに置いた花束。朝の明るい自然光、背景はやわらかくぼかす。花の大きさや向きに自然なばらつきがあり、花びらの質感までリアルに。',
+          '【条件】人物や手は写さない。文字・ロゴ・透かしは入れない。縦長（4:5）。');
+      }
+      if(note)out.push('【ご要望】'+note);
+    }else{
+      if(t==='wedding'){
+        out.push('Please create an image that looks like a real photograph of wedding venue flowers decorated by a professional event florist.','',
+          'Area: '+selText('wplace'),'Taste: '+selText('wtaste'),'Flowers: '+flTxt,
+          'Scene: a wedding reception hall, soft bright lighting, elegant and not overcrowded, lifelike petal and leaf texture.',
+          'Rules: no people, no text, logos or watermarks, landscape 3:2.');
+      }else if(t==='arrangement'){
+        out.push('Please create an image that looks like a real photograph of a flower arrangement made by a professional florist.','',
+          'Container / style: '+selText('arrstyle'),'Taste: '+selText('arrtaste'),'Flowers: '+flTxt+', with greenery and small filler flowers',
+          'Scene: on a wooden table inside a flower shop, bright natural window light, softly blurred background, lifelike petal texture.',
+          'Rules: no people or hands, no text, logos or watermarks, square.');
+      }else{
+        out.push('Please create an image that looks like a real photograph of a hand-tied bouquet made by a professional florist.','',
+          'Flowers: '+flTxt+', with greenery and small filler flowers');
+        if(main)out.push('Main flower: '+main);
+        out.push('Style: '+selText('style'),'Wrapping: '+WRAP_EN[wi],
+          'Scene: the bouquet placed on a rustic wooden table at the front of a flower shop, bright morning natural light, softly blurred background, natural variation in bloom size and direction, lifelike petal texture.',
+          'Rules: no people or hands, no text, logos or watermarks, portrait 4:5.');
+      }
+      if(note)out.push('Requests: '+note);
+    }
+    return out.join('\n');
+  }
+  function legacyCopy(){try{var ta=$('gpt-prompt');ta.focus();ta.select();return document.execCommand('copy');}catch(e){return false;}}
+  function copyPrompt(t){
+    try{if(navigator.clipboard&&navigator.clipboard.writeText){return navigator.clipboard.writeText(t).then(function(){return true;},function(){return legacyCopy();});}}catch(e){}
+    return Promise.resolve(legacyCopy());
+  }
+  function openGpt(){$('gpt-prompt').value=buildGptPrompt();$('gpt-modal').hidden=false;$('gpt-modal').classList.add('open');}
+  function closeGpt(){$('gpt-modal').classList.remove('open');$('gpt-modal').hidden=true;}
+  $('to-chatgpt').addEventListener('click',openGpt);
+  $('gpt-close').addEventListener('click',closeGpt);
+  $('gpt-cancel').addEventListener('click',closeGpt);
+  $('gpt-modal').addEventListener('click',function(e){if(e.target===$('gpt-modal'))closeGpt();});
+  $('gpt-copy').addEventListener('click',function(){
+    copyPrompt($('gpt-prompt').value).then(function(ok){
+      toast(ok?L('指示文をコピーしました。','gpt.copied'):L('コピーできませんでした。指示文を選択してコピーしてください。','gpt.copyfail'));
+    });
+  });
+  $('gpt-open').addEventListener('click',function(){
+    var txt=$('gpt-prompt').value;
+    window.open('https://chatgpt.com/?q='+encodeURIComponent(txt),'_blank');
+    copyPrompt(txt);
+    toast(L('ChatGPTを開きました（指示文はコピー済みです）。','gpt.opened'));
+  });
 
   applyLang();
   loadShared();
