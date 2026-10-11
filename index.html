@@ -124,6 +124,11 @@ textarea{resize:vertical;line-height:1.5}
 .gpt-steps{margin:0 0 12px;padding-left:20px;font-size:13px;color:var(--ink-soft);line-height:1.8}
 #gpt-prompt{min-height:240px;font-size:13px;line-height:1.65}
 #to-chatgpt{margin-top:-6px}
+.staff-badge{display:inline-block;vertical-align:middle;font-family:var(--font-body);font-size:11px;font-weight:600;color:#fff;background:var(--sage-deep);border-radius:999px;padding:3px 9px;margin-left:6px}
+.staff-status{font-size:13px;line-height:1.7;background:var(--stage-1);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px}
+#staff-migrate{background:var(--surface);border:1px dashed var(--sage);border-radius:10px;padding:12px;margin-bottom:14px}
+#staff-token{width:100%;font-family:ui-monospace,Menlo,monospace;font-size:13.5px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:9px 10px}
+#staff-token:focus{outline:none;border-color:var(--sage)}
 /* 花材ボード（上部・全幅） */
 .fboard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:20px;box-shadow:0 10px 30px -24px var(--shadow)}
 .fboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
@@ -198,12 +203,13 @@ textarea{resize:vertical;line-height:1.5}
     <div class="fboard">
       <div class="fboard-head">
         <div>
-          <h2 data-i18n="fb.title">入荷中の花から選ぶ</h2>
+          <h2><span data-i18n="fb.title">入荷中の花から選ぶ</span> <span class="staff-badge" id="staff-badge" hidden>共有モード</span></h2>
           <div class="note" data-i18n="fb.note">使いたい花をタップで選んでください（複数OK）。<br>写真のない花は、申し訳ございませんが現在入荷しておりません。</div>
         </div>
         <div class="fboard-actions">
           <span class="note" id="fb-count"></span>
           <button type="button" class="btn ghost sm" id="fb-clear" data-i18n="fb.clear">選択をクリア</button>
+          <button type="button" class="btn ghost sm" id="staff-btn" title="スタッフ設定">🔑</button>
         </div>
       </div>
       <div class="fb-grid" id="fb-grid"></div>
@@ -366,6 +372,36 @@ textarea{resize:vertical;line-height:1.5}
       <button type="button" class="btn ghost sm" id="gpt-cancel" data-i18n="btn.close">閉じる</button>
       <button type="button" class="btn ghost sm" id="gpt-copy" data-i18n="gpt.copy">指示文をコピー</button>
       <button type="button" class="btn primary sm" id="gpt-open" data-i18n="gpt.open">ChatGPTを開く</button>
+    </div>
+  </div>
+</div>
+<!-- ===== スタッフ設定（写真をみんなに共有） ===== -->
+<div class="modal" id="staff-modal" hidden>
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2>スタッフ設定（写真をみんなに共有）</h2>
+      <button class="x" id="staff-close" aria-label="閉じる">×</button>
+    </div>
+    <div class="sheet-body">
+      <div class="staff-status" id="staff-status"></div>
+      <div id="staff-migrate" hidden></div>
+      <div id="staff-setup">
+        <p class="note" style="margin:0 0 10px">このスマホで入れた花の写真や入荷の変更を、<b>お客さまを含む全員の画面</b>に反映できるようにします。GitHubで「カギ（アクセストークン）」を作り、下に貼り付けてください。</p>
+        <ol class="gpt-steps">
+          <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHubのカギ作成ページ</a>を開く（ログインした状態で）</li>
+          <li><b>Token name</b>：<code>flower-studio</code>　<b>Expiration</b>：選べる中で長いもの（1年など）</li>
+          <li><b>Repository access</b>：<b>Only select repositories</b> → <code>flower-studio</code> を選ぶ</li>
+          <li><b>Permissions</b> → <b>Repository permissions</b> → <b>Contents</b> を <b>Read and write</b> に</li>
+          <li>一番下の <b>Generate token</b> → 表示された <code>github_pat_…</code> をコピー</li>
+        </ol>
+        <input type="password" id="staff-token" placeholder="github_pat_… を貼り付け" autocomplete="off" spellcheck="false">
+        <p class="note" style="margin:10px 0 0">⚠️ カギはこのスマホの中だけに保存されます。<b>他の人に教えたり、チャット等に貼ったりしないでください。</b>スマホをなくしたときは、GitHubのカギ一覧から削除すれば無効になります。</p>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button type="button" class="btn ghost sm" id="staff-off" hidden>このスマホの共有を解除</button>
+      <button type="button" class="btn ghost sm" id="staff-cancel">閉じる</button>
+      <button type="button" class="btn primary sm" id="staff-save">保存して接続</button>
     </div>
   </div>
 </div>
@@ -875,6 +911,63 @@ textarea{resize:vertical;line-height:1.5}
   $('order-form').addEventListener('submit',function(e){e.preventDefault();sendAuto();});
   $('of-gmail').addEventListener('click',sendGmail);
 
+  /* ===== スタッフ共有モード（GitHubに直接保存） =====
+     スタッフのスマホに GitHub の「カギ（トークン）」を一度入れると、
+     そのスマホで入れた花の写真・入荷の変更が GitHub に保存され、全員の画面に反映される。
+     カギはその端末の中だけに保存し、サイトのファイルには含めない。 */
+  var GH={owner:'nori0122-se',repo:'flower-studio',branch:'main'};
+  (function(){try{var h=location.hostname;if(/\.github\.io$/i.test(h)){GH.owner=h.split('.')[0];var seg=location.pathname.split('/').filter(Boolean)[0];if(seg&&seg.indexOf('.')<0)GH.repo=seg;}}catch(e){}})();
+  var GH_TOKEN_KEY='hanataba_gh_token';
+  var ghToken='';try{ghToken=localStorage.getItem(GH_TOKEN_KEY)||'';}catch(e){ghToken='';}
+  var previewPhotos={}; // 共有した直後にすぐ表示するための写真（この画面の間だけ・保存しない）
+  var ghBusy=false;
+  function staffMode(){return !!ghToken;}
+  function photoUrl(p){
+    if(!p)return '';
+    if(/^(data:|https?:)/i.test(p))return p;
+    // スタッフ端末は GitHub から直接読む（公開サイトの更新を待たずにすぐ見える）
+    if(staffMode())return 'https://raw.githubusercontent.com/'+GH.owner+'/'+GH.repo+'/'+GH.branch+'/'+p;
+    return p;
+  }
+  function ghErr(status){
+    var m=status===401?'カギ（トークン）が無効か、期限切れです。「🔑 スタッフ」から入れ直してください。'
+      :status===403?'カギの権限が足りません。GitHubでカギの Contents を「Read and write」にしてください。'
+      :status===404?'リポジトリが見つかりません。カギの Repository access で '+GH.repo+' を選んでください。'
+      :'GitHubとの通信に失敗しました（'+status+'）。少し時間をおいてお試しください。';
+    var e=new Error(m);e.userMsg=m;e.status=status;return e;
+  }
+  function ghApi(path,opts){
+    opts=opts||{};
+    var h={'Accept':'application/vnd.github+json','Authorization':'Bearer '+ghToken,'X-GitHub-Api-Version':'2022-11-28'};
+    if(opts.body)h['Content-Type']='application/json';
+    opts.headers=h;
+    return fetch('https://api.github.com/repos/'+GH.owner+'/'+GH.repo+path,opts);
+  }
+  function b64encUtf8(str){var b=new TextEncoder().encode(str),out='';for(var i=0;i<b.length;i++)out+=String.fromCharCode(b[i]);return btoa(out);}
+  function b64decUtf8(b64){var bin=atob(String(b64).replace(/\s/g,'')),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new TextDecoder().decode(u);}
+  async function ghGetContent(){
+    var r=await ghApi('/contents/content.json?ref='+encodeURIComponent(GH.branch),{cache:'no-store'});
+    if(!r.ok)throw ghErr(r.status);
+    var j=await r.json();
+    return {data:JSON.parse(b64decUtf8(j.content)),sha:j.sha};
+  }
+  // content.json を書き換えて保存（ほかの人と同時に保存してぶつかったら、最新を読み直してやり直す）
+  async function ghEditContent(mutate,msg){
+    for(var a=0;a<3;a++){
+      var c=await ghGetContent();
+      mutate(c.data);
+      var r=await ghApi('/contents/content.json',{method:'PUT',body:JSON.stringify({message:msg,content:b64encUtf8(JSON.stringify(c.data,null,2)+'\n'),sha:c.sha,branch:GH.branch})});
+      if(r.ok)return c.data;
+      if(r.status!==409&&r.status!==422)throw ghErr(r.status);
+    }
+    throw ghErr(409);
+  }
+  async function ghPutImage(path,dataUrl,msg){
+    var r=await ghApi('/contents/'+path,{method:'PUT',body:JSON.stringify({message:msg,content:dataUrl.split(',')[1],branch:GH.branch})});
+    if(!r.ok)throw ghErr(r.status);
+  }
+  function slugFor(f){var x=String(f.en||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return x||'flower';}
+
   /* ===== 花材ボード ===== */
   var FKEY='hanataba_flowers_v1';
   var DEFAULT_FLOWERS=[
@@ -894,7 +987,9 @@ textarea{resize:vertical;line-height:1.5}
   function normFlower(f){
     if(f.localPhoto===undefined)f.localPhoto=(f.photo&&String(f.photo).indexOf('data:')===0)?f.photo:'';
     if(f.sharedPhoto===undefined)f.sharedPhoto='';
-    f.photo=f.localPhoto||f.sharedPhoto||'';
+    var shared=f.sharedPhoto?(previewPhotos[f.jp]||photoUrl(f.sharedPhoto)):'';
+    // スタッフ端末は「全員に見えている状態」をそのまま表示する（その端末だけの写真は使わない）
+    f.photo=staffMode()?shared:(f.localPhoto||shared||'');
     return f;
   }
   flowers.forEach(normFlower);
@@ -912,13 +1007,34 @@ textarea{resize:vertical;line-height:1.5}
   function fbCount(){$('fb-count').textContent=picked.length?((LANG==='en')?(picked.length+' selected'):(picked.length+'種類を選択中')):L('タップで花を選んでください','fb.hint');}
 
   var photoTarget=null;
-  function resizeSmall(file){
+  function resizeSmall(file,maxSize,quality){
     return new Promise(function(res){
       var img=new Image();
-      img.onload=function(){var max=420,w=img.width,h=img.height;if(w>max||h>max){var r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}var cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);res(cv.toDataURL('image/jpeg',0.78));};
+      img.onload=function(){var max=maxSize||420,w=img.width,h=img.height;if(w>max||h>max){var r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}var cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);res(cv.toDataURL('image/jpeg',quality||0.78));};
       img.onerror=function(){res(null);};
       var fr=new FileReader();fr.onload=function(){img.src=fr.result;};fr.readAsDataURL(file);
     });
+  }
+  // スタッフ端末：写真を GitHub に保存して全員に共有
+  async function shareFlowerPhoto(fl,dataUrl){
+    var path='images/flowers/'+slugFor(fl)+'-'+Date.now()+'.jpg';
+    await ghPutImage(path,dataUrl,'写真: '+fl.jp);
+    var data=await ghEditContent(function(d){
+      d.flowers=d.flowers||[];
+      var t=d.flowers.filter(function(x){return x.jp===fl.jp;})[0];
+      if(t)t.photo=path;else d.flowers.push({jp:fl.jp,en:fl.en||fl.jp,photo:path});
+    },'入荷: '+fl.jp);
+    previewPhotos[fl.jp]=dataUrl;
+    flowers.forEach(function(x){if(x.jp===fl.jp)x.localPhoto='';});
+    applyShared(data);
+  }
+  // 共有の操作をひとつずつ実行（二重送信を防ぐ）
+  async function ghRun(label,fn){
+    if(ghBusy){toast('ただいま共有中です。少しお待ちください。');return false;}
+    ghBusy=true;toast(label+'…');
+    try{await fn();return true;}
+    catch(e){toast(e&&e.userMsg?e.userMsg:'共有できませんでした。通信状況をご確認ください。');return false;}
+    finally{ghBusy=false;}
   }
   // 写真がある花＝入荷中、写真がない花＝入荷なし
   function oosMessage(f){
@@ -950,17 +1066,36 @@ textarea{resize:vertical;line-height:1.5}
       var bp=document.createElement('button');bp.type='button';bp.className='mini';bp.textContent=L('写真','fb.photo');
       bp.addEventListener('click',function(){photoTarget=f.id;$('fb-file').click();});
       tools.appendChild(bp);
-      if(f.localPhoto){
+      if(staffMode()?!!f.sharedPhoto:!!f.localPhoto){
         // 売り切れ・入荷終了のときは写真を外す（＝入荷なし表示に戻る）
         var bo=document.createElement('button');bo.type='button';bo.className='mini';bo.textContent=L('外す','fb.unset');
         bo.addEventListener('click',function(){
+          if(staffMode()){
+            if(!confirm('「'+f.jp+'」を全員の画面で「入荷なし」にしますか？'))return;
+            ghRun('入荷なしに変更中',async function(){
+              var data=await ghEditContent(function(d){var t=(d.flowers||[]).filter(function(x){return x.jp===f.jp;})[0];if(t)t.photo='';},'入荷なし: '+f.jp);
+              delete previewPhotos[f.jp];applyShared(data);
+            }).then(function(ok){if(ok)toast('「'+f.jp+'」を入荷なしにしました（全員に反映）。');});
+            return;
+          }
           if(!confirm((LANG==='en')?('Remove the photo and mark '+fname(f)+' as out of stock?'):('「'+f.jp+'」の写真を外して「入荷なし」にしますか？')))return;
-          f.localPhoto='';f.photo=f.sharedPhoto||'';persistFlowers();renderBoard();fbCount();renderFsel();
+          f.localPhoto='';normFlower(f);persistFlowers();renderBoard();fbCount();renderFsel();
         });
         tools.appendChild(bo);
       }
       var bd=document.createElement('button');bd.type='button';bd.className='mini';bd.textContent='×';
       bd.addEventListener('click',function(){
+        if(staffMode()){
+          if(!confirm('「'+f.jp+'」を全員の花材一覧から削除しますか？'))return;
+          ghRun('花材を削除中',async function(){
+            var data=await ghEditContent(function(d){d.flowers=(d.flowers||[]).filter(function(x){return x.jp!==f.jp;});},'花材を削除: '+f.jp);
+            delete previewPhotos[f.jp];
+            var i=flowers.indexOf(f);if(i>=0)flowers.splice(i,1);
+            var pi=picked.indexOf(f.id);if(pi>=0)picked.splice(pi,1);
+            applyShared(data);
+          }).then(function(ok){if(ok)toast('「'+f.jp+'」を削除しました（全員に反映）。');});
+          return;
+        }
         if(!confirm((LANG==='en')?('Remove '+fname(f)+' from the board?'):(f.jp+' を花材から削除しますか？')))return;
         var i=flowers.indexOf(f);if(i>=0)flowers.splice(i,1);
         var pi=picked.indexOf(f.id);if(pi>=0)picked.splice(pi,1);
@@ -975,6 +1110,15 @@ textarea{resize:vertical;line-height:1.5}
     var f=this.files&&this.files[0];this.value='';
     if(!f||!photoTarget)return;
     var target=photoTarget;photoTarget=null;
+    if(staffMode()){
+      var sf=fById(target);if(!sf)return;
+      resizeSmall(f,800,0.82).then(function(src){
+        if(!src){toast('写真を読み込めませんでした。');return;}
+        ghRun('写真を共有中',function(){return shareFlowerPhoto(sf,src);})
+          .then(function(ok){if(ok)toast('「'+sf.jp+'」を全員に共有しました（お客さまの画面には1〜2分で反映されます）。');});
+      });
+      return;
+    }
     resizeSmall(f).then(function(src){
       if(!src){toast('写真を読み込めませんでした。');return;}
       var fl=fById(target);if(fl){fl.localPhoto=src;fl.photo=src;persistFlowers();renderBoard();fbCount();renderFsel();toast(L('写真を登録しました（入荷中になりました）。','ts.saved.photo'));}
@@ -987,6 +1131,14 @@ textarea{resize:vertical;line-height:1.5}
   $('fb-add').addEventListener('click',function(){
     var n=$('fb-new').value.trim();
     if(!n){toast(L('花材の名前を入力してください。','ts.fb.name'));return;}
+    if(staffMode()){
+      if(flowers.some(function(x){return x.jp===n;})){toast('「'+n+'」はすでにあります。');return;}
+      ghRun('花材を追加中',async function(){
+        var data=await ghEditContent(function(d){d.flowers=d.flowers||[];if(!d.flowers.some(function(x){return x.jp===n;}))d.flowers.push({jp:n,en:jpToEn(n),photo:''});},'花材を追加: '+n);
+        $('fb-new').value='';applyShared(data);
+      }).then(function(ok){if(ok)toast('「'+n+'」を追加しました（全員に反映）。');});
+      return;
+    }
     flowers.push({id:'f'+Date.now().toString(36),jp:n,en:jpToEn(n),photo:''});
     $('fb-new').value='';persistFlowers();renderBoard();toast((LANG==='en')?(n+' added.'):(n+' を追加しました。'));
   });
@@ -1117,16 +1269,18 @@ textarea{resize:vertical;line-height:1.5}
         if(d.texts[lg]&&I18N[lg])Object.keys(d.texts[lg]).forEach(function(k){I18N[lg][k]=d.texts[lg][k];});
       });
     }
-    if(Array.isArray(d.flowers)&&d.flowers.length){
+    if(d.github&&!/\.github\.io$/i.test(location.hostname)){GH.owner=d.github.owner||GH.owner;GH.repo=d.github.repo||GH.repo;GH.branch=d.github.branch||GH.branch;}
+    if(Array.isArray(d.flowers)){
       var localAll=flowers.slice();
       var localOnly=flowers.filter(function(f){return !f.shared;});
       var shared=d.flowers.map(function(f,i){
         var prev=localAll.filter(function(x){return x.jp===f.jp;})[0];
-        return normFlower({id:'s'+i,jp:f.jp,en:f.en||f.jp,shared:true,
+        return normFlower({id:'s:'+f.jp,jp:f.jp,en:f.en||f.jp,shared:true,
           localPhoto:prev?(prev.localPhoto||''):'', sharedPhoto:f.photo||''});
       });
       var names={};shared.forEach(function(f){names[f.jp]=1;});
       flowers=shared.concat(localOnly.filter(function(f){return !names[f.jp];}));
+      persistFlowers();
     }
     if(Array.isArray(d.gallery)){
       sharedLibrary=d.gallery.map(function(it,i){
@@ -1139,8 +1293,18 @@ textarea{resize:vertical;line-height:1.5}
     if($('gallery-panel')&&!$('gallery-panel').hidden)renderGallery();
   }
   function loadShared(){
+    // スタッフ端末は GitHub から最新を直接読む（公開サイトの更新待ちがない）
+    if(staffMode()){
+      ghGetContent().then(function(c){applyShared(c.data);})
+        .catch(function(e){loadSharedPublic();if(e&&e.userMsg)toast(e.userMsg);});
+      return;
+    }
+    loadSharedPublic();
+  }
+  function loadSharedPublic(){
     try{
-      fetch('content.json',{cache:'no-store'})
+      // ?t=… で毎回最新を取りに行く（公開サイトの一時保存で古い内容が出ないように）
+      fetch('content.json?t='+Date.now(),{cache:'no-store'})
         .then(function(r){return r.ok?r.json():null;})
         .then(function(d){if(d)applyShared(d);})
         .catch(function(){});
@@ -1212,6 +1376,74 @@ textarea{resize:vertical;line-height:1.5}
     copyPrompt(txt);
     toast(L('ChatGPTを開きました（指示文はコピー済みです）。','gpt.opened'));
   });
+
+  /* ===== スタッフ設定の画面 ===== */
+  function updateStaffUI(){
+    var on=staffMode();
+    $('staff-badge').hidden=!on;
+    $('staff-off').hidden=!on;
+    $('staff-setup').hidden=on;
+    $('staff-save').hidden=on;
+    $('staff-status').innerHTML=on
+      ?('✅ このスマホは<b>共有モード</b>です（'+esc(GH.owner+'/'+GH.repo)+'）。<br>「写真」「外す」「×」「追加」の変更は、<b>全員の画面に反映</b>されます（お客さまの画面には1〜2分）。')
+      :('このスマホは<b>まだ共有モードではありません</b>。今は「写真」で入れた写真は<b>このスマホだけ</b>に保存されます。');
+    var locals=flowers.filter(function(f){return f.localPhoto;});
+    var mg=$('staff-migrate');
+    if(on&&locals.length){
+      mg.hidden=false;
+      mg.innerHTML='<div class="note" style="margin:0 0 8px">このスマホだけに保存されている写真が <b>'+locals.length+'枚</b> あります（'+esc(locals.map(function(f){return f.jp;}).join('、'))+'）。</div>'
+        +'<button type="button" class="btn primary sm" id="staff-migrate-btn">この写真を全員に共有する</button>';
+      $('staff-migrate-btn').addEventListener('click',migrateLocalPhotos);
+    }else{mg.hidden=true;mg.innerHTML='';}
+  }
+  async function migrateLocalPhotos(){
+    var locals=flowers.filter(function(f){return f.localPhoto;}).map(function(f){return {jp:f.jp,en:f.en,src:f.localPhoto};});
+    if(!locals.length)return;
+    if(ghBusy){toast('ただいま共有中です。少しお待ちください。');return;}
+    ghBusy=true;var done=0;
+    try{
+      for(var i=0;i<locals.length;i++){
+        toast('共有中… '+(i+1)+' / '+locals.length+'（'+locals[i].jp+'）');
+        await shareFlowerPhoto(locals[i],locals[i].src);
+        done++;
+      }
+      toast(done+'枚を全員に共有しました（お客さまの画面には1〜2分で反映されます）。');
+    }catch(e){toast((e&&e.userMsg)||'共有できませんでした。通信状況をご確認ください。');}
+    finally{ghBusy=false;renderBoard();fbCount();renderFsel();updateStaffUI();}
+  }
+  function openStaff(){updateStaffUI();$('staff-modal').hidden=false;$('staff-modal').classList.add('open');}
+  function closeStaff(){$('staff-modal').classList.remove('open');$('staff-modal').hidden=true;$('staff-token').value='';}
+  function refreshAfterStaffChange(){
+    flowers.forEach(normFlower);renderBoard();fbCount();renderFsel();updateStaffUI();loadShared();
+  }
+  $('staff-btn').addEventListener('click',openStaff);
+  $('staff-close').addEventListener('click',closeStaff);
+  $('staff-cancel').addEventListener('click',closeStaff);
+  $('staff-modal').addEventListener('click',function(e){if(e.target===$('staff-modal'))closeStaff();});
+  $('staff-save').addEventListener('click',async function(){
+    var t=$('staff-token').value.trim();
+    if(!t){toast('カギ（github_pat_…）を貼り付けてください。');return;}
+    var prev=ghToken;ghToken=t;
+    var btn=$('staff-save');btn.disabled=true;btn.textContent='接続を確認中…';
+    try{
+      await ghGetContent();
+      try{localStorage.setItem(GH_TOKEN_KEY,t);}catch(e){}
+      $('staff-token').value='';
+      toast('接続しました。このスマホは共有モードです。');
+      refreshAfterStaffChange();
+    }catch(e){
+      ghToken=prev;
+      toast((e&&e.userMsg)||'接続できませんでした。カギを確認してください。');
+    }finally{btn.disabled=false;btn.textContent='保存して接続';}
+  });
+  $('staff-off').addEventListener('click',function(){
+    if(!confirm('このスマホの共有モードを解除しますか？（GitHubのカギはこのスマホから消えます）'))return;
+    ghToken='';try{localStorage.removeItem(GH_TOKEN_KEY);}catch(e){}
+    previewPhotos={};
+    toast('共有モードを解除しました。');
+    refreshAfterStaffChange();
+  });
+  updateStaffUI();
 
   applyLang();
   loadShared();
