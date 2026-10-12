@@ -1038,19 +1038,20 @@ textarea{resize:vertical;line-height:1.5}
   function b64encUtf8(str){var b=new TextEncoder().encode(str),out='';for(var i=0;i<b.length;i++)out+=String.fromCharCode(b[i]);return btoa(out);}
   function b64decUtf8(b64){var bin=atob(String(b64).replace(/\s/g,'')),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new TextDecoder().decode(u);}
   async function ghGetContent(){
-    var r=await ghApi('/contents/content.json?ref='+encodeURIComponent(GH.branch),{cache:'no-store'});
+    var r=await ghApi('/contents/content.json?ref='+encodeURIComponent(GH.branch)+'&t='+Date.now(),{cache:'no-store'});
     if(!r.ok)throw ghErr(r.status);
     var j=await r.json();
     return {data:JSON.parse(b64decUtf8(j.content)),sha:j.sha};
   }
   // content.json を書き換えて保存（ほかの人と同時に保存してぶつかったら、最新を読み直してやり直す）
   async function ghEditContent(mutate,msg){
-    for(var a=0;a<3;a++){
+    for(var a=0;a<4;a++){
       var c=await ghGetContent();
       mutate(c.data);
       var r=await ghApi('/contents/content.json',{method:'PUT',body:JSON.stringify({message:msg,content:b64encUtf8(JSON.stringify(c.data,null,2)+'\n'),sha:c.sha,branch:GH.branch})});
       if(r.ok)return c.data;
       if(r.status!==409&&r.status!==422)throw ghErr(r.status);
+      await sleep(1000+a*1000);
     }
     throw ghErr(409);
   }
@@ -1060,11 +1061,16 @@ textarea{resize:vertical;line-height:1.5}
   }
   // ギャラリーの作品を1件だけ書き換える（写真の場所で探す）
   async function ghEditGallery(path,fn,msg){
-    return ghEditContent(function(d){
-      var t=(d.gallery||[]).filter(function(x){return (x.photo||x.src)===path;})[0];
-      if(!t)throw {userMsg:'この作品が見つかりませんでした。画面を再読み込みしてください。'};
-      fn(t);
-    },msg);
+    for(var a=0;a<4;a++){
+      try{
+        return await ghEditContent(function(d){
+          var t=(d.gallery||[]).filter(function(x){return (x.photo||x.src)===path;})[0];
+          if(!t)throw {notFound:true};
+          fn(t);
+        },msg);
+      }catch(e){if(!e||!e.notFound)throw e;await sleep(1500);}
+    }
+    throw {userMsg:'この作品が見つかりませんでした。画面を再読み込みしてから、もう一度保存してください。'};
   }
   // 使わなくなった作品写真を GitHub から消す（失敗しても作品の削除はできているので気にしない）
   async function ghDeleteFile(path,msg){
@@ -1396,14 +1402,21 @@ textarea{resize:vertical;line-height:1.5}
     flowers.forEach(function(x){if(x.jp===fl.jp)x.localPhoto='';});
     applyShared(data);
   }
-  // 共有の操作をひとつずつ実行（二重送信を防ぐ）
-  async function ghRun(label,fn){
-    if(ghBusy){toast('ただいま共有中です。少しお待ちください。');return false;}
-    ghBusy=true;toast(label+'…');
-    try{await fn();return true;}
-    catch(e){toast(e&&e.userMsg?e.userMsg:'共有できませんでした。通信状況をご確認ください。');return false;}
-    finally{ghBusy=false;}
+  // 共有の操作をひとつずつ順番に実行（前の保存が終わるまで待ってから次を行う。断らない）
+  var ghQueue=Promise.resolve(), ghWaiting=0;
+  function ghRun(label,fn){
+    if(ghBusy)toast('前の保存が終わったら続けて保存します…');
+    ghWaiting++;
+    var p=ghQueue.then(async function(){
+      ghBusy=true;toast(label+'…');
+      try{await fn();return true;}
+      catch(e){toast(e&&e.userMsg?e.userMsg:'共有できませんでした。通信状況をご確認ください。');return false;}
+      finally{ghWaiting--;ghBusy=ghWaiting>0;}
+    });
+    ghQueue=p;
+    return p;
   }
+  function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
   // 写真がある花＝入荷中、写真がない花＝入荷なし
   function oosMessage(f){
     return (LANG==='en')?('Sorry, '+fname(f)+' is not in stock at the moment.')
@@ -1543,6 +1556,11 @@ textarea{resize:vertical;line-height:1.5}
   function matches(item){return true;}
   function esc(s){return String(s).replace(/[&<>"]/g,function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
 
+  // 共有作品の「まだ保存していない商品名・価格」（写真の場所ごと・この端末の中だけ）
+  var DKEY='hanataba_gallery_drafts';
+  var galleryDrafts={};
+  try{galleryDrafts=JSON.parse(localStorage.getItem(DKEY)||'{}')||{};}catch(e){galleryDrafts={};}
+  function saveDrafts(){try{localStorage.setItem(DKEY,JSON.stringify(galleryDrafts));}catch(e){}}
   function renderGallery(){
     var g=$('gallery');g.innerHTML='';
     var all=sharedLibrary.concat(library);
@@ -1563,24 +1581,49 @@ textarea{resize:vertical;line-height:1.5}
       // 商品名・価格
       var row=document.createElement('div');row.className='row2';
       var ti=document.createElement('input');ti.className='t';ti.type='text';ti.placeholder=L('商品名','gc.titleph');ti.value=item.title||'';
-      ti.addEventListener('input',function(){item.title=ti.value;persist();});
+      // この端末だけの作品は入力したらすぐ保存。共有作品は下の「保存」ボタンで保存する
+      if(!item.shared)ti.addEventListener('input',function(){item.title=ti.value;persist();});
       var pi=document.createElement('input');pi.type='text';pi.placeholder=L('価格','gc.priceph');pi.value=item.price||'';
-      pi.addEventListener('input',function(){item.price=pi.value;persist();});
+      if(!item.shared)pi.addEventListener('input',function(){item.price=pi.value;persist();});
       if(item.shared&&!staffEdit){ti.disabled=true;pi.disabled=true;}
+      var saveBtn=null,saveNote=null;
       if(staffEdit){
-        // 入力を終えたら（欄から離れたら）全員に反映
-        var saveMeta=function(){
-          var nt=ti.value.trim(),np=pi.value.trim();
-          if(nt===item.title&&np===item.price)return;
-          ghRun('作品の情報を保存中',async function(){
-            var data=await ghEditGallery(item.path,function(t){t.title=nt;t.price=np;},'作品: '+(nt||'無題')+(np?('（'+np+'）'):''));
-            applyShared(data);
-          }).then(function(ok){if(ok)toast('「'+(nt||'無題')+'」を保存しました（全員に反映）。');else renderGallery();});
+        // 入力した内容は下書きとして残し（画面が描き直されても消えない）、「保存」で全員に反映
+        var dr=galleryDrafts[item.path];
+        if(dr){ti.value=dr.title;pi.value=dr.price;}
+        saveBtn=document.createElement('button');saveBtn.className='btn primary sm';
+        saveNote=document.createElement('div');saveNote.className='note';
+        var refreshSave=function(){
+          var dirty=(ti.value.trim()!==(item.title||'')||pi.value.trim()!==(item.price||''));
+          if(dirty)galleryDrafts[item.path]={title:ti.value,price:pi.value};else delete galleryDrafts[item.path];
+          saveDrafts();
+          saveBtn.disabled=!dirty;
+          saveBtn.textContent=dirty?'保存（全員に反映）':'保存済み';
+          saveNote.textContent=dirty?'※ まだ保存されていません。「保存」を押してください。':'';
+          saveNote.hidden=!dirty;
         };
-        ti.addEventListener('change',saveMeta);pi.addEventListener('change',saveMeta);
+        ti.addEventListener('input',refreshSave);pi.addEventListener('input',refreshSave);
+        saveBtn.addEventListener('click',function(){
+          var nt=ti.value.trim(),np=pi.value.trim(),path=item.path;
+          saveBtn.disabled=true;saveBtn.textContent='保存中…';
+          ghRun('商品名・価格を保存中',async function(){
+            var data=await ghEditGallery(path,function(t){t.title=nt;t.price=np;},'作品: '+(nt||'無題')+(np?('（'+np+'）'):''));
+            var d2=galleryDrafts[path];
+            if(d2&&d2.title.trim()===nt&&d2.price.trim()===np){delete galleryDrafts[path];saveDrafts();}
+            applyShared(data);
+          }).then(function(ok){
+            if(ok)toast('「'+(nt||'無題')+'」'+(np?('（'+np+'）'):'')+'を保存しました（全員に反映）。');
+            else renderGallery();
+          });
+        });
+        refreshSave();
       }
       row.appendChild(ti);row.appendChild(pi);body.appendChild(row);
       // ChatGPTなどで作って取り込んだ画像は「AIで作った画像」にすると、カードに断りが入る
+      if(saveBtn){
+        var sr=document.createElement('div');sr.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+        sr.appendChild(saveBtn);sr.appendChild(saveNote);body.appendChild(sr);
+      }
       if(!item.shared||staffEdit){
         var al=document.createElement('label');al.className='aichk';
         var ac=document.createElement('input');ac.type='checkbox';ac.checked=(item.kind==='ai');
@@ -1626,8 +1669,9 @@ textarea{resize:vertical;line-height:1.5}
       if(!item.shared&&staffMode()){
         var sh=document.createElement('button');sh.className='btn ghost sm';sh.textContent='全員に共有';
         sh.addEventListener('click',function(){
+          sh.disabled=true;sh.textContent='共有中…';
           ghRun('ギャラリーに共有中',function(){return shareGalleryItem(item,item.src);})
-            .then(function(ok){if(!ok)return;var i=library.indexOf(item);if(i>=0)library.splice(i,1);persist();renderGallery();toast('全員のギャラリーに共有しました。');});
+            .then(function(ok){if(!ok){renderGallery();return;}var i=library.indexOf(item);if(i>=0)library.splice(i,1);persist();renderGallery();toast('全員のギャラリーに共有しました。');});
         });
         acts.appendChild(sh);
       }
