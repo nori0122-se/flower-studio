@@ -718,8 +718,11 @@ textarea{resize:vertical;line-height:1.5}
     if(LANG==='en')return f?(fname(f)+' Bouquet'):'Original Bouquet';
     return f?(f.jp+'のブーケ'):'オリジナルブーケ';
   }
+  // 画像サーバー（Cloudflare の FLUX）。content.json の image.endpoint に住所が入っていれば、そちらで高画質に生成する。
+  var IMG_ENDPOINT='';
   function buildUrl(prompt,seed){
-    // ※ Pollinationsの現行モデルは sana のみ（flux指定は無効になったため外す）
+    if(IMG_ENDPOINT)return IMG_ENDPOINT+(IMG_ENDPOINT.indexOf('?')<0?'?':'&')+'prompt='+encodeURIComponent(prompt)+'&seed='+seed;
+    // 未設定のときは従来の無料サービス（Pollinations。現行モデルは sana のみ）
     return 'https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=1024&height=1024&nologo=true&seed='+seed;
   }
   function showError(m){$('errbox').innerHTML=m?('<div class="err">'+m+'</div>'):'';}
@@ -754,7 +757,9 @@ textarea{resize:vertical;line-height:1.5}
           return;
         }
         $('stage').innerHTML='<div class="placeholder"><span class="em">🥀</span>'+((LANG==='en')?'Could not generate':'生成できませんでした')+'</div>';
-        showError((LANG==='en')?'The image service is busy. Please wait a minute and press “Generate another”.':'画像サービスが混み合っています。1分ほど待ってから「別の写真を生成」を押してください。');
+        showError(IMG_ENDPOINT
+          ?((LANG==='en')?'Could not generate. Today’s free allowance may be used up (it resets at 09:00 JST), or the service is busy. Please try again later.':'生成できませんでした。今日の無料枠を使い切ったか、混み合っている可能性があります（無料枠は毎朝9時にリセット）。時間をおいてお試しください。')
+          :((LANG==='en')?'The image service is busy. Please wait a minute and press “Generate another”.':'画像サービスが混み合っています。1分ほど待ってから「別の写真を生成」を押してください。'));
         busy=false;$('gen').disabled=false;
       };
       img.src=url;
@@ -1412,6 +1417,7 @@ textarea{resize:vertical;line-height:1.5}
     if(!d||typeof d!=='object')return;
     SHARED=d;
     if(d.order&&d.order.email)ORDER_EMAIL=d.order.email;
+    if(d.image&&typeof d.image.endpoint==='string')IMG_ENDPOINT=d.image.endpoint.trim().replace(/\/+$/,'');
     if(d.texts){
       ['ja','en'].forEach(function(lg){
         if(d.texts[lg]&&I18N[lg])Object.keys(d.texts[lg]).forEach(function(k){I18N[lg][k]=d.texts[lg][k];});

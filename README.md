@@ -87,6 +87,30 @@
 
 ---
 
+## ★ 「花束の写真を生成する」を高画質にする（Cloudflare・無料）
+
+アプリ内の画像生成を、高画質なAI（FLUX）に切り替えます。最初に1回だけ設定します。
+
+1. [Cloudflare](https://dash.cloudflare.com/sign-up) で無料アカウントを作る
+2. 左のメニューから **Workers & Pages**（または Compute → Workers）を開き、**Create** → **Create Worker**
+3. 名前を `flower-studio-image` にして **Deploy**
+4. **Edit code** を押し、中身を全部消して、このリポジトリの `cloudflare/worker.js` の中身を貼り付けて **Deploy**
+5. Worker の **Settings** → **Bindings** → **Add** → **Workers AI** を選び、Variable name を **`AI`** にして保存（Deploy）
+6. Worker の住所（`https://flower-studio-image.○○.workers.dev`）をブラウザで開き、「花束スタジオの画像サーバーは動いています。」と出ればOK
+   - 住所の最後に `?prompt=white roses bouquet` を付けて開くと、花束の画像が出ます
+7. `content.json` の `"image"` の `"endpoint"` に、その住所を書いて Commit changes
+
+```
+  "image": {
+    "endpoint": "https://flower-studio-image.○○.workers.dev"
+  },
+```
+
+- 1日に使える無料分があり、**毎朝9時（日本時間）にリセット**されます。使い切るとその日は生成できなくなるだけで、**料金はかかりません**（無料プランのまま使う場合）
+- `endpoint` を空（`""`）に戻すと、元の生成方法に戻ります
+
+---
+
 ## 2. 作品（花束）をギャラリーに載せる
 
 1. 写真を `images/gallery/` にアップロード（手順は上と同じ）

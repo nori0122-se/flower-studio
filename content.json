@@ -3,6 +3,9 @@
   "order": {
     "email": "mar30.shiori@gmail.com"
   },
+  "image": {
+    "endpoint": ""
+  },
   "texts": {
     "ja": {},
     "en": {}
@@ -16,8 +19,7 @@
     {
       "jp": "ガーベラ",
       "en": "gerbera daisies",
-      "photo": "images/flowers/gerbera-daisies-1791787436805.jpg",
-      "color": "クリーム"
+      "photo": ""
     },
     {
       "jp": "ユリ",
@@ -108,30 +110,6 @@
       "jp": "グリーン（葉物）",
       "en": "mixed greenery",
       "photo": ""
-    },
-    {
-      "jp": "アンスリウム",
-      "en": "アンスリウム",
-      "photo": "images/flowers/flower-1791787525836.jpg",
-      "color": "ラベンダー"
-    },
-    {
-      "jp": "キンギョソウ",
-      "en": "キンギョソウ",
-      "photo": "images/flowers/flower-1791787561568.jpg",
-      "color": "緑"
-    },
-    {
-      "jp": "ハイブリッドスターチス",
-      "en": "ハイブリッドスターチス",
-      "photo": "images/flowers/flower-1791787602173.jpg",
-      "color": "ピンク"
-    },
-    {
-      "jp": "モカラ",
-      "en": "モカラ",
-      "photo": "images/flowers/flower-1791787625746.jpg",
-      "color": "濃いピンク"
     }
   ],
   "gallery": []
