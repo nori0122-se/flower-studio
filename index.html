@@ -129,6 +129,16 @@ textarea{resize:vertical;line-height:1.5}
 #staff-migrate{background:var(--surface);border:1px dashed var(--sage);border-radius:10px;padding:12px;margin-bottom:14px}
 #staff-token{width:100%;font-family:ui-monospace,Menlo,monospace;font-size:13.5px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:9px 10px}
 #staff-token:focus{outline:none;border-color:var(--sage)}
+.fcolor-row{display:flex;justify-content:center;padding:0 4px 6px}
+.fcolor{display:inline-flex;align-items:center;gap:5px;max-width:100%;font-size:11px;font-family:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 9px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcolor:hover{border-color:var(--sage)}
+.fcolor .dot,.color-grid .sw{display:inline-block;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:var(--line)}
+.fcolor .dot{width:10px;height:10px;flex:0 0 10px}
+.color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.color-grid button{display:flex;align-items:center;gap:8px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;text-align:left}
+.color-grid button:hover{border-color:var(--sage)}
+.color-grid button[aria-pressed="true"]{border-color:var(--sage-deep);box-shadow:0 0 0 2px var(--sage-deep)}
+.color-grid .sw{width:18px;height:18px;flex:0 0 18px}
 /* 花材ボード（上部・全幅） */
 .fboard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:20px;box-shadow:0 10px 30px -24px var(--shadow)}
 .fboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
@@ -405,6 +415,23 @@ textarea{resize:vertical;line-height:1.5}
     </div>
   </div>
 </div>
+<!-- ===== 花の色を選ぶ ===== -->
+<div class="modal" id="color-modal" hidden>
+  <div class="sheet" style="width:min(480px,100%)">
+    <div class="sheet-head">
+      <h2 id="color-title">花の色</h2>
+      <button class="x" id="color-close" aria-label="閉じる">×</button>
+    </div>
+    <div class="sheet-body">
+      <p class="note" id="color-note" style="margin:0 0 12px"></p>
+      <div class="color-grid" id="color-grid"></div>
+    </div>
+    <div class="sheet-foot">
+      <button type="button" class="btn ghost sm" id="color-auto">写真から自動で判定する</button>
+      <button type="button" class="btn ghost sm" id="color-cancel">閉じる</button>
+    </div>
+  </div>
+</div>
 <input type="file" id="fb-file" accept="image/*" class="sr-only">
 
 <!-- 印刷用（画面では非表示） -->
@@ -658,7 +685,7 @@ textarea{resize:vertical;line-height:1.5}
   // 実際の花屋の花束写真に近づけるための共通の撮影・質感の指示
   var PHOTO_REAL='soft natural window light, shallow depth of field, shot on a 50mm lens, true to life colours, visible petal texture, real photograph, not an illustration, not a 3d render, no text';
   function flowerList(){
-    var pf=pickedEn();
+    var pf=pickedDescEn();
     return pf.length?pf.join(', '):'roses, ranunculus, lisianthus, spray roses and seasonal filler flowers';
   }
   function buildPrompt(){
@@ -667,18 +694,20 @@ textarea{resize:vertical;line-height:1.5}
       var place=WPLACE[+$('wplace').value]||WPLACE[0];
       var taste=WTASTE[+$('wtaste').value]||WTASTE[0];
       return withExtra('real photograph of wedding floral decoration made by a professional event florist, '+place.en+
-        ', using '+fl+' with foliage, '+taste.en+', tasteful and restrained, not overcrowded, elegant banquet hall, '+PHOTO_REAL+', no people');
+        ', using '+fl+(picked.length?', only these flowers in exactly these colours, no other flowers and no other colours,':'')+' with foliage, '+taste.en+', tasteful and restrained, not overcrowded, elegant banquet hall, '+PHOTO_REAL+', no people');
     }
     if(gen.type==='arrangement'){
       var ast=ARRSTYLE[+$('arrstyle').value]||ARRSTYLE[0];
       var att=ARRTASTE[+$('arrtaste').value]||ARRTASTE[0];
       return withExtra('real photograph of a flower arrangement made by a professional florist, '+ast.en+
-        ', arranged with '+fl+' and fresh foliage, natural asymmetry, varied bloom sizes, '+att.en+', on a plain neutral background, '+PHOTO_REAL);
+        ', arranged with '+fl+(picked.length?', using only these flowers in exactly these colours, no other flowers and no other colours, with a little fresh foliage':' and fresh foliage')+', natural asymmetry, varied bloom sizes, '+att.en+', on a plain neutral background, '+PHOTO_REAL);
     }
     var main=$('mainflower').value;
+    var mainEn=main?(mainMatch('en')||main):'';
     return withExtra('real photograph of a hand-tied flower bouquet made by a professional florist, made with '+fl+
-      (main?(', featuring plenty of '+main):'')+
-      ', mixed with eucalyptus and filler greenery, spiral stem construction gathered at a binding point, stems visible below the bouquet, '+
+      (mainEn?(', featuring plenty of '+mainEn):'')+
+      (picked.length?', using only these flowers in exactly these colours, no other flowers and no other colours, with just a little green foliage':', mixed with eucalyptus and filler greenery')+
+      ', spiral stem construction gathered at a binding point, stems visible below the bouquet, '+
       'natural asymmetry, varied bloom sizes, '+$('style').value+', the bouquet lying on a rustic wooden table in a flower shop, product photo, no people, no hands, '+PHOTO_REAL);
   }
   // カード見出し（選んだ最初の花の名前で）
@@ -987,6 +1016,8 @@ textarea{resize:vertical;line-height:1.5}
   function normFlower(f){
     if(f.localPhoto===undefined)f.localPhoto=(f.photo&&String(f.photo).indexOf('data:')===0)?f.photo:'';
     if(f.sharedPhoto===undefined)f.sharedPhoto='';
+    if(f.localColor===undefined)f.localColor='';
+    if(f.sharedColor===undefined)f.sharedColor='';
     var shared=f.sharedPhoto?(previewPhotos[f.jp]||photoUrl(f.sharedPhoto)):'';
     // スタッフ端末は「全員に見えている状態」をそのまま表示する（その端末だけの写真は使わない）
     f.photo=staffMode()?shared:(f.localPhoto||shared||'');
@@ -999,10 +1030,112 @@ textarea{resize:vertical;line-height:1.5}
   function fname(f){ if(LANG!=='en')return f.jp; var e=(f.en||f.jp||'').replace(/\b\w/g,function(c){return c.toUpperCase();}); return e; }
   function pickedEn(){return picked.map(function(id){var f=fById(id);return f?f.en:'';}).filter(Boolean);}
 
+  /* ===== 花の色（写真から自動判定＋タップで修正） =====
+     画像AIには花の「名前」だけでなく「色」も伝えないと、別の色の花で作られてしまうため。 */
+  var FCOLORS=[
+    {ja:'白',en:'white',hex:'#F7F5EF'},{ja:'クリーム',en:'cream',hex:'#F3E7C6'},
+    {ja:'淡いピンク',en:'pale pink',hex:'#F6C9D6'},{ja:'ピンク',en:'pink',hex:'#EE86AE'},{ja:'濃いピンク',en:'deep pink',hex:'#D2427A'},
+    {ja:'赤',en:'red',hex:'#C8283A'},{ja:'ボルドー',en:'burgundy',hex:'#7A2238'},
+    {ja:'コーラル',en:'coral',hex:'#F38B6C'},{ja:'サーモンピンク',en:'salmon pink',hex:'#F7A58A'},{ja:'オレンジ',en:'orange',hex:'#F0922E'},
+    {ja:'淡い黄色',en:'pale yellow',hex:'#F6E6A0'},{ja:'黄色',en:'yellow',hex:'#F2C531'},
+    {ja:'ラベンダー',en:'lavender',hex:'#BFA8DE'},{ja:'紫',en:'purple',hex:'#7E4FAE'},
+    {ja:'水色',en:'light blue',hex:'#9CC6E8'},{ja:'青',en:'blue',hex:'#3F6FC0'},{ja:'緑',en:'green',hex:'#7FA35B'}
+  ];
+  function colorByJa(ja){for(var i=0;i<FCOLORS.length;i++){if(FCOLORS[i].ja===ja)return FCOLORS[i];}return null;}
+  var autoColors={}; // 写真ごとの自動判定の結果（この画面を開いている間だけ）
+  function rgb2hsl(r,g,b){r/=255;g/=255;b/=255;var mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,h=0,s=0;if(mx!==mn){var d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);if(mx===r)h=(g-b)/d+(g<b?6:0);else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;}return [h,s,l];}
+  // 写真の中央付近の色を数えて花の色を推定する。
+  // 背景の白・灰色、葉の緑、木のテーブル・肌・ベージュ（黄〜橙で暗め・くすんだ色）は数えない。
+  // 結果 {ja:色名, conf:確からしさ0〜1} を返す。
+  function classifyColor(px,w,h){
+    var cx=w/2,cy=h/2,R=Math.min(w,h)*0.46,bins=[],binL=[],white=0,warmW=0,green=0,chrom=0,tot=0;
+    for(var k=0;k<36;k++){bins.push(0);binL.push(0);}
+    for(var y=0;y<h;y++)for(var x=0;x<w;x++){
+      var dx=x-cx,dy=y-cy,d=Math.sqrt(dx*dx+dy*dy);if(d>R)continue;
+      var cw=1-0.6*(d/R),i=(y*w+x)*4,r=px[i],g=px[i+1],b=px[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),C=(mx-mn)/255,L=(mx+mn)/510,H=0;
+      if(mx!==mn){var dd=mx-mn;if(mx===r)H=((g-b)/dd+(g<b?6:0));else if(mx===g)H=(b-r)/dd+2;else H=(r-g)/dd+4;H*=60;}
+      if(L<0.12)continue;tot+=cw;
+      var warm=(H>=18&&H<65);
+      if(C<(warm?0.2:0.09)){if(L>0.66){white+=cw;if(r-b>12)warmW+=cw;}continue;}
+      if(H>=65&&H<170){green+=cw;continue;}
+      if(warm&&L<0.7&&C<0.45)continue;
+      chrom+=cw;var kk=Math.floor(H/10)%36,wt=cw*(0.4+C);bins[kk]+=wt;binL[kk]+=L*wt;
+    }
+    if(chrom<0.08*tot||chrom<0.18*(chrom+white)){
+      if(white>=green*0.4)return {ja:(warmW>white*0.5?'クリーム':'白'),conf:Math.min(1,white/(tot||1)*2)};
+      return {ja:'緑',conf:0.3};
+    }
+    var sum=0,best=0,bv=-1;for(var q=0;q<36;q++)sum+=bins[q];
+    for(var q2=0;q2<36;q2++){var v=bins[q2]+bins[(q2+35)%36]+bins[(q2+1)%36];if(v>bv){bv=v;best=q2;}}
+    var rep=best;[(best+35)%36,(best+1)%36].forEach(function(z){if(bins[z]>bins[rep])rep=z;});
+    var hue=rep*10+5,L2=binL[rep]/(bins[rep]||1),conf=bv/(sum||1),ja;
+    if(hue>=345||hue<8)ja=L2>0.79?'淡いピンク':L2>0.55?'ピンク':L2<0.3?'ボルドー':'赤';
+    else if(hue<20)ja=L2>0.55?'サーモンピンク':L2<0.4?'赤':'コーラル';
+    else if(hue<45)ja=L2>0.72?'サーモンピンク':'オレンジ';
+    else if(hue<65)ja=L2>0.72?'淡い黄色':'黄色';
+    else if(hue<200)ja='水色';
+    else if(hue<250)ja=L2>0.65?'水色':'青';
+    else if(hue<290)ja=L2>0.62?'ラベンダー':'紫';
+    else ja=L2>0.79?'淡いピンク':L2<0.42?'濃いピンク':'ピンク';
+    return {ja:ja,conf:conf};
+  }
+  function detectColor(src){
+    if(!src)return Promise.resolve(null);
+    if(autoColors[src]!==undefined)return Promise.resolve(autoColors[src]);
+    return new Promise(function(res){
+      var img=new Image();img.crossOrigin='anonymous';
+      img.onload=function(){
+        try{
+          var S=64,cv=document.createElement('canvas');cv.width=S;cv.height=S;var cx=cv.getContext('2d');
+          var m=Math.min(img.width,img.height);cx.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
+          var rr=classifyColor(cx.getImageData(0,0,S,S).data,S,S);autoColors[src]=rr;res(rr);
+        }catch(e){autoColors[src]=null;res(null);}
+      };
+      img.onerror=function(){autoColors[src]=null;res(null);};
+      img.src=src;
+    });
+  }
+  // 花の色：手で決めた色 → なければ写真からの自動判定
+  function isManualColor(f){return !!(staffMode()?f.sharedColor:(f.localColor||f.sharedColor));}
+  function flowerColorJa(f){
+    var manual=staffMode()?(f.sharedColor||''):(f.localColor||f.sharedColor||'');
+    if(manual)return manual;
+    var a=f.photo?autoColors[f.photo]:null;
+    return (a&&a.conf>=0.45)?a.ja:'';
+  }
+  function isFoliage(f){return /green|eucalyptus|foliage|leaf|leaves/i.test(f.en||'')||/グリーン|ユーカリ|葉/.test(f.jp||'');}
+  function descJa(f){var c=flowerColorJa(f);return (c&&!isFoliage(f))?(c+'の'+f.jp):f.jp;}
+  function descEn(f){var c=colorByJa(flowerColorJa(f));return (c&&!isFoliage(f))?(c.en+' '+f.en):f.en;}
+  function pickedDescEn(){return picked.map(function(id){var f=fById(id);return f?descEn(f):'';}).filter(Boolean);}
+  function pickedDescJa(){return picked.map(function(id){var f=fById(id);return f?descJa(f):'';}).filter(Boolean);}
+  // 「主役の花」が選んだ花と同じなら、その色つきの名前を返す（違えば空）
+  function mainMatch(lang){
+    var v=$('mainflower').value;if(!v)return '';
+    for(var i=0;i<picked.length;i++){var f=fById(picked[i]);if(f&&f.en===v)return lang==='ja'?descJa(f):descEn(f);}
+    return '';
+  }
+  function paintChip(cb,f){
+    var c=colorByJa(flowerColorJa(f));
+    var pending=f.photo&&autoColors[f.photo]===undefined;
+    cb.innerHTML=c?('<span class="dot" style="background:'+c.hex+'"></span>'+esc(LANG==='en'?c.en:c.ja))
+                  :('<span class="dot"></span>'+(pending?(LANG==='en'?'Reading…':'色を判定中…'):(LANG==='en'?'Pick colour':'色を選ぶ')));
+    cb.title=(LANG==='en')?'Tap to change the colour':(isManualColor(f)?'タップで色を変更':'写真から自動で判定した色です（タップで変更）');
+  }
+  function updateColorChips(){
+    Array.prototype.forEach.call(document.querySelectorAll('.fcolor[data-fid]'),function(cb){var f=fById(cb.getAttribute('data-fid'));if(f)paintChip(cb,f);});
+    renderFsel();
+  }
+  function ensureColors(){
+    flowers.forEach(function(f){
+      if(!f.photo||autoColors[f.photo]!==undefined)return;
+      detectColor(f.photo).then(updateColorChips);
+    });
+  }
+
   function renderFsel(){
     var el=$('fsel-view');
     if(!picked.length){el.innerHTML='<span class="note">'+L('未選択（定番の花で作ります）','fsel.none')+'</span>';return;}
-    el.innerHTML=picked.map(function(id){var f=fById(id);return f?('<span class="chip sm" aria-pressed="true" style="pointer-events:none">'+esc(fname(f))+'</span>'):'';}).join('');
+    el.innerHTML=picked.map(function(id){var f=fById(id);if(!f)return '';var t=(LANG==='en')?descEn(f).replace(/\b\w/g,function(c){return c.toUpperCase();}):descJa(f);return '<span class="chip sm" aria-pressed="true" style="pointer-events:none">'+esc(t)+'</span>';}).join('');
   }
   function fbCount(){$('fb-count').textContent=picked.length?((LANG==='en')?(picked.length+' selected'):(picked.length+'種類を選択中')):L('タップで花を選んでください','fb.hint');}
 
@@ -1102,9 +1235,18 @@ textarea{resize:vertical;line-height:1.5}
         persistFlowers();renderBoard();fbCount();renderFsel();
       });
       tools.appendChild(bd);
-      c.appendChild(pick);c.appendChild(chk);c.appendChild(tools);
+      c.appendChild(pick);c.appendChild(chk);
+      if(inStock){
+        var cr=document.createElement('div');cr.className='fcolor-row';
+        var cb=document.createElement('button');cb.type='button';cb.className='fcolor';cb.setAttribute('data-fid',f.id);
+        paintChip(cb,f);
+        cb.addEventListener('click',function(){openColorPicker(f);});
+        cr.appendChild(cb);c.appendChild(cr);
+      }
+      c.appendChild(tools);
       g.appendChild(c);
     });
+    ensureColors();
   }
   $('fb-file').addEventListener('change',function(){
     var f=this.files&&this.files[0];this.value='';
@@ -1115,13 +1257,19 @@ textarea{resize:vertical;line-height:1.5}
       resizeSmall(f,800,0.82).then(function(src){
         if(!src){toast('写真を読み込めませんでした。');return;}
         ghRun('写真を共有中',function(){return shareFlowerPhoto(sf,src);})
-          .then(function(ok){if(ok)toast('「'+sf.jp+'」を全員に共有しました（お客さまの画面には1〜2分で反映されます）。');});
+          .then(function(ok){
+            if(!ok)return;
+            toast('「'+sf.jp+'」を全員に共有しました（お客さまの画面には1〜2分で反映されます）。');
+            var nf=fById('s:'+sf.jp)||fById(sf.id);
+            if(nf&&nf.photo)detectColor(nf.photo).then(function(){updateColorChips();openColorPicker(nf,true);});
+          });
       });
       return;
     }
     resizeSmall(f).then(function(src){
       if(!src){toast('写真を読み込めませんでした。');return;}
-      var fl=fById(target);if(fl){fl.localPhoto=src;fl.photo=src;persistFlowers();renderBoard();fbCount();renderFsel();toast(L('写真を登録しました（入荷中になりました）。','ts.saved.photo'));}
+      var fl=fById(target);if(fl){fl.localPhoto=src;fl.photo=src;persistFlowers();renderBoard();fbCount();renderFsel();toast(L('写真を登録しました（入荷中になりました）。','ts.saved.photo'));
+        detectColor(src).then(function(){updateColorChips();openColorPicker(fl,true);});}
     });
   });
   function jpToEn(n){
@@ -1276,7 +1424,8 @@ textarea{resize:vertical;line-height:1.5}
       var shared=d.flowers.map(function(f,i){
         var prev=localAll.filter(function(x){return x.jp===f.jp;})[0];
         return normFlower({id:'s:'+f.jp,jp:f.jp,en:f.en||f.jp,shared:true,
-          localPhoto:prev?(prev.localPhoto||''):'', sharedPhoto:f.photo||''});
+          localPhoto:prev?(prev.localPhoto||''):'', sharedPhoto:f.photo||'',
+          localColor:prev?(prev.localColor||''):'', sharedColor:f.color||''});
       });
       var names={};shared.forEach(function(f){names[f.jp]=1;});
       flowers=shared.concat(localOnly.filter(function(f){return !names[f.jp];}));
@@ -1319,8 +1468,9 @@ textarea{resize:vertical;line-height:1.5}
   // 指示文は「何を作るか」だけ（ラッピング・撮影イメージ・条件は入れない）
   function buildGptPrompt(){
     var en=(LANG==='en'), t=gen.type, out=[];
-    var fl=en?pickedEn().map(function(x){return x.replace(/\b\w/g,function(c){return c.toUpperCase();});}):pickedJa();
-    var flTxt=fl.length?fl.join(en?', ':'、'):(en?'florist’s choice (e.g. roses, carnations, lisianthus, greenery)':'おまかせ（バラ、カーネーション、トルコキキョウ、グリーンなど）');
+    var fl=en?pickedDescEn():pickedDescJa();
+    var flTxt=fl.length?(fl.join(en?', ':'、')+(en?' (use only these flowers in these exact colours; no other flowers)':'（この花・この色だけを使い、ほかの種類や色の花は入れない）'))
+                       :(en?'florist’s choice (e.g. roses, carnations, lisianthus, greenery)':'おまかせ（バラ、カーネーション、トルコキキョウ、グリーンなど）');
     var note=($('comment').value||'').trim();
     var main=$('mainflower').value?selText('mainflower'):'';
     if(!en){
@@ -1333,7 +1483,7 @@ textarea{resize:vertical;line-height:1.5}
       }else{
         out.push('花屋さんが実際に束ねた花束の「本物の写真」のような画像を作ってください。','',
           '【使う花】'+flTxt);
-        if(main)out.push('【主役】'+main);
+        if(main){var mj=mainMatch('ja');out.push('【主役】'+(mj?(mj+'を多めに'):main));}
         out.push('【スタイル】'+selText('style'));
       }
       if(note)out.push('【ご要望】'+note);
@@ -1347,7 +1497,7 @@ textarea{resize:vertical;line-height:1.5}
       }else{
         out.push('Please create an image that looks like a real photograph of a hand-tied bouquet made by a professional florist.','',
           'Flowers: '+flTxt);
-        if(main)out.push('Main flower: '+main);
+        if(main){var me=mainMatch('en');out.push('Main flower: '+(me?('plenty of '+me):main));}
         out.push('Style: '+selText('style'));
       }
       if(note)out.push('Requests: '+note);
@@ -1444,6 +1594,47 @@ textarea{resize:vertical;line-height:1.5}
     refreshAfterStaffChange();
   });
   updateStaffUI();
+
+  /* ===== 花の色を選ぶ画面 ===== */
+  var colorTarget=null;
+  function openColorPicker(f,fresh){
+    colorTarget=f;
+    var ar=f.photo?autoColors[f.photo]:null,auto=ar?ar.ja:'';
+    var en=(LANG==='en'),cur=flowerColorJa(f)||(fresh?auto:'');
+    $('color-title').textContent=en?(fname(f)+' — colour'):('「'+f.jp+'」の色');
+    var ac=colorByJa(auto);
+    $('color-note').innerHTML=en
+      ?((fresh?'<b>Please choose the colour of the flowers in this photo.</b> ':'')+'Our best guess from the photo'+(ac?(': <b>'+esc(ac.en)+'</b>'):' is not available')+'. Tap the correct colour — the images will use it.')
+      :((fresh?'<b>写真の花の色を選んでください。</b><br>':'')+'写真からの判定'+(ac?('：<b>'+esc(ac.ja)+'</b>'):'：判定できませんでした')+'。正しい色をタップしてください（合っていればそのままタップ）。画像はこの色で作られます。'
+        +(staffMode()&&f.shared?'<br>※共有モードなので、選んだ色は全員に反映されます。':''));
+    var g=$('color-grid');g.innerHTML='';
+    FCOLORS.forEach(function(c){
+      var b=document.createElement('button');b.type='button';
+      b.setAttribute('aria-pressed',c.ja===cur?'true':'false');
+      b.innerHTML='<span class="sw" style="background:'+c.hex+'"></span>'+esc(en?c.en:c.ja);
+      b.addEventListener('click',function(){setFlowerColor(f,c.ja);});
+      g.appendChild(b);
+    });
+    $('color-auto').hidden=!isManualColor(f);
+    $('color-modal').hidden=false;$('color-modal').classList.add('open');
+  }
+  function closeColor(){$('color-modal').classList.remove('open');$('color-modal').hidden=true;colorTarget=null;}
+  function setFlowerColor(f,ja){
+    var label=ja?((LANG==='en'?colorByJa(ja).en:ja)):(LANG==='en'?'auto':'自動判定');
+    if(staffMode()&&f.shared){
+      ghRun('色を保存中',async function(){
+        var data=await ghEditContent(function(d){var t=(d.flowers||[]).filter(function(x){return x.jp===f.jp;})[0];if(t){if(ja)t.color=ja;else delete t.color;}},'色: '+f.jp+' → '+(ja||'自動'));
+        applyShared(data);
+      }).then(function(ok){if(ok){closeColor();toast('「'+f.jp+'」の色を「'+label+'」にしました（全員に反映）。');}});
+      return;
+    }
+    f.localColor=ja||'';persistFlowers();updateColorChips();closeColor();
+    toast((LANG==='en')?(fname(f)+': colour set to '+label+'.'):('「'+f.jp+'」の色を「'+label+'」にしました。'));
+  }
+  $('color-close').addEventListener('click',closeColor);
+  $('color-cancel').addEventListener('click',closeColor);
+  $('color-auto').addEventListener('click',function(){if(colorTarget)setFlowerColor(colorTarget,'');});
+  $('color-modal').addEventListener('click',function(e){if(e.target===$('color-modal'))closeColor();});
 
   applyLang();
   loadShared();
