@@ -425,6 +425,7 @@ textarea{resize:vertical;line-height:1.5}
     <div class="sheet-body">
       <p class="note" id="color-note" style="margin:0 0 12px"></p>
       <div class="color-grid" id="color-grid"></div>
+      <div id="en-box" style="margin-top:16px"></div>
     </div>
     <div class="sheet-foot">
       <button type="button" class="btn ghost sm" id="color-auto">写真から自動で判定する</button>
@@ -684,31 +685,40 @@ textarea{resize:vertical;line-height:1.5}
 
   // 実際の花屋の花束写真に近づけるための共通の撮影・質感の指示
   var PHOTO_REAL='soft natural window light, shallow depth of field, shot on a 50mm lens, true to life colours, visible petal texture, real photograph, not an illustration, not a 3d render, no text';
+  // 選んだ花を「色＋英語名（形の説明）」で並べる。花の種類を正しく描かせるため、指示の先頭に置く。
   function flowerList(){
-    var pf=pickedDescEn();
-    return pf.length?pf.join(', '):'roses, ranunculus, lisianthus, spray roses and seasonal filler flowers';
+    var arr=picked.map(function(id){var f=fById(id);return f?promptDesc(f):'';}).filter(Boolean);
+    return arr.length?joinAnd(arr):'roses, ranunculus, lisianthus, spray roses and seasonal filler flowers';
   }
+  // 画像AIはバラを描きがちなので、バラを選んでいないときは「バラなし」と明記する
+  function noRoseTxt(){
+    if(!picked.length)return '';
+    var main=$('mainflower').value;
+    var hasRose=picked.some(function(id){var f=fById(id);return f&&/rose/i.test(enName(f));})||/rose/i.test(main);
+    return hasRose?'':'no roses, ';
+  }
+  function onlyTxt(){return picked.length?(noRoseTxt()+'no other flower types, no other colours, '):'';}
   function buildPrompt(){
-    var fl=flowerList();
+    var fl=flowerList(),only=onlyTxt();
     if(gen.type==='wedding'){
       var place=WPLACE[+$('wplace').value]||WPLACE[0];
       var taste=WTASTE[+$('wtaste').value]||WTASTE[0];
-      return withExtra('real photograph of wedding floral decoration made by a professional event florist, '+place.en+
-        ', using '+fl+(picked.length?', only these flowers in exactly these colours, no other flowers and no other colours,':'')+' with foliage, '+taste.en+', tasteful and restrained, not overcrowded, elegant banquet hall, '+PHOTO_REAL+', no people');
+      return withExtra('real photograph of wedding floral decoration by a professional event florist, made '+(picked.length?'only ':'')+'of '+fl+', '+only+
+        place.en+', '+taste.en+', with foliage, tasteful and restrained, not overcrowded, elegant banquet hall, '+PHOTO_REAL+', no people');
     }
     if(gen.type==='arrangement'){
       var ast=ARRSTYLE[+$('arrstyle').value]||ARRSTYLE[0];
       var att=ARRTASTE[+$('arrtaste').value]||ARRTASTE[0];
-      return withExtra('real photograph of a flower arrangement made by a professional florist, '+ast.en+
-        ', arranged with '+fl+(picked.length?', using only these flowers in exactly these colours, no other flowers and no other colours, with a little fresh foliage':' and fresh foliage')+', natural asymmetry, varied bloom sizes, '+att.en+', on a plain neutral background, '+PHOTO_REAL);
+      return withExtra('real photograph of a florist flower arrangement made '+(picked.length?'only ':'')+'of '+fl+', '+only+
+        'a little fresh foliage, '+ast.en+', '+att.en+', natural asymmetry, varied bloom sizes, on a plain neutral background, '+PHOTO_REAL);
     }
     var main=$('mainflower').value;
     var mainEn=main?(mainMatch('en')||main):'';
-    return withExtra('real photograph of a hand-tied flower bouquet made by a professional florist, made with '+fl+
-      (mainEn?(', featuring plenty of '+mainEn):'')+
-      (picked.length?', using only these flowers in exactly these colours, no other flowers and no other colours, with just a little green foliage':', mixed with eucalyptus and filler greenery')+
-      ', spiral stem construction gathered at a binding point, stems visible below the bouquet, '+
-      'natural asymmetry, varied bloom sizes, '+$('style').value+', the bouquet lying on a rustic wooden table in a flower shop, product photo, no people, no hands, '+PHOTO_REAL);
+    return withExtra('real photograph of a florist\'s hand-tied bouquet made '+(picked.length?'only ':'')+'of '+fl+
+      (mainEn?(', with plenty of '+mainEn):'')+', '+only+
+      (picked.length?'a little green foliage, ':'mixed with eucalyptus and filler greenery, ')+
+      $('style').value+', spiral stems gathered at a binding point, natural asymmetry, varied bloom sizes, '+
+      'lying on a rustic wooden table in a flower shop, product photo, no people, no hands, '+PHOTO_REAL);
   }
   // カード見出し（選んだ最初の花の名前で）
   function curEyebrow(){
@@ -1022,6 +1032,7 @@ textarea{resize:vertical;line-height:1.5}
     if(f.localPhoto===undefined)f.localPhoto=(f.photo&&String(f.photo).indexOf('data:')===0)?f.photo:'';
     if(f.sharedPhoto===undefined)f.sharedPhoto='';
     if(f.localColor===undefined)f.localColor='';
+    if(f.localEn===undefined)f.localEn='';
     if(f.sharedColor===undefined)f.sharedColor='';
     var shared=f.sharedPhoto?(previewPhotos[f.jp]||photoUrl(f.sharedPhoto)):'';
     // スタッフ端末は「全員に見えている状態」をそのまま表示する（その端末だけの写真は使わない）
@@ -1032,7 +1043,7 @@ textarea{resize:vertical;line-height:1.5}
   function persistFlowers(){try{localStorage.setItem(FKEY,JSON.stringify(flowers));}catch(e){toast('保存容量がいっぱいです。花材の写真を減らしてください。');}}
   var picked=[];
   function fById(id){for(var i=0;i<flowers.length;i++){if(flowers[i].id===id)return flowers[i];}return null;}
-  function fname(f){ if(LANG!=='en')return f.jp; var e=(f.en||f.jp||'').replace(/\b\w/g,function(c){return c.toUpperCase();}); return e; }
+  function fname(f){ if(LANG!=='en')return f.jp; var e=(enName(f)||f.jp||'').replace(/\b\w/g,function(c){return c.toUpperCase();}); return e; }
   function pickedEn(){return picked.map(function(id){var f=fById(id);return f?f.en:'';}).filter(Boolean);}
 
   /* ===== 花の色（写真から自動判定＋タップで修正） =====
@@ -1108,9 +1119,121 @@ textarea{resize:vertical;line-height:1.5}
     var a=f.photo?autoColors[f.photo]:null;
     return (a&&a.conf>=0.45)?a.ja:'';
   }
+  /* ===== 花の辞書（日本語名 → 英語名＋形の説明） =====
+     画像AIは英語の花名しか正しく理解できず、知らない名前だとバラなどで代用してしまう。
+     そこで英語名と「どんな形の花か」を一緒に伝えて、選んだ花の種類どおりに描かせる。 */
+  var FLOWER_DICT=[
+    [['スプレーバラ','スプレーローズ'],'spray roses','clusters of small rose blooms on branching stems'],
+    [['バラ','薔薇','ローズ'],'roses','classic layered rose blooms'],
+    [['ガーベラ'],'gerbera daisies','large flat daisy-like blooms with a round centre'],
+    [['カサブランカ'],'casablanca lilies','large white trumpet-shaped six-petalled lilies'],
+    [['ユリ','百合','ゆり'],'lilies','large trumpet-shaped six-petalled blooms with prominent stamens'],
+    [['カーネーション'],'carnations','ruffled frilly-edged blooms'],
+    [['チューリップ'],'tulips','cup-shaped blooms on smooth stems'],
+    [['ひまわり','ヒマワリ','向日葵'],'sunflowers','large blooms with bright petals around a dark centre'],
+    [['あじさい','アジサイ','紫陽花'],'hydrangeas','large rounded clusters of small four-petalled florets'],
+    [['芍薬','シャクヤク','ピオニー'],'peonies','large lush rounded blooms with many soft petals'],
+    [['ラナンキュラス'],'ranunculus','round blooms packed with thin tissue-like layered petals'],
+    [['ダリア'],'dahlias','blooms with many neatly layered pointed petals'],
+    [['トルコキキョウ','リシアンサス','ユーストマ'],'lisianthus','soft ruffled cup-shaped blooms with swirled buds'],
+    [['かすみ草','カスミソウ','かすみそう','霞草'],'gypsophila baby breath','clouds of tiny flowers on fine branching stems'],
+    [['スイートピー'],'sweet peas','delicate ruffled butterfly-like petals on slender stems'],
+    [['コスモス','秋桜'],'cosmos','simple daisy-like blooms with eight broad petals on thin stems'],
+    [['ピンポンマム'],'pompon chrysanthemums','perfectly round ball-shaped blooms'],
+    [['スプレーマム','マム','菊','キク'],'chrysanthemums','many-petalled rounded blooms'],
+    [['アネモネ'],'anemones','cup-shaped blooms with a dark centre'],
+    [['ミモザ'],'mimosa','fluffy tiny pompom flowers on feathery branches'],
+    [['ラベンダー'],'lavender','slender spikes of tiny flowers'],
+    [['ユーカリ'],'eucalyptus','round silvery blue-green leaves'],
+    [['キンギョソウ','金魚草','スナップドラゴン'],'snapdragons','tall upright spikes densely covered in small ruffled florets'],
+    [['アンスリウム','アンスリューム'],'anthurium','glossy heart-shaped waxy spathes, each with a slender upright spadix'],
+    [['スカビオサ'],'scabiosa','pincushion-like domed blooms with ruffled outer petals on wiry stems'],
+    [['デルフィニウム','デルフィニューム','ラークスパー','チドリソウ'],'delphinium','tall spikes of many open five-petalled florets'],
+    [['ストック','アラセイトウ'],'stock flowers','dense spikes of ruffled fragrant florets'],
+    [['カラー'],'calla lilies','elegant trumpet-shaped single spathes on long smooth stems'],
+    [['アルストロメリア'],'alstroemeria','clusters of small lily-like blooms with streaked inner petals'],
+    [['ヒペリカム'],'hypericum berries','clusters of glossy round berries'],
+    [['ワックスフラワー'],'waxflower','tiny waxy star-shaped flowers on needle-leaved sprigs'],
+    [['ブルースター','オキシペタラム','ルリトウワタ'],'tweedia','small star-shaped flowers'],
+    [['クレマチス'],'clematis','flat star-shaped blooms with broad petals'],
+    [['ドウダンツツジ'],'enkianthus branches','branches with small fresh green leaves'],
+    [['ブルーレースフラワー'],'blue lace flower','domed lacy clusters of tiny blue florets'],
+    [['レースフラワー'],'white lace flower','flat lacy umbrella-shaped clusters of tiny florets'],
+    [['ニゲラ'],'nigella','delicate blooms surrounded by fine thread-like bracts'],
+    [['マトリカリア'],'matricaria','tiny button daisies with yellow centres'],
+    [['ソリダゴ','ソリダスター'],'solidago','feathery sprays of tiny yellow flowers'],
+    [['フランネルフラワー'],'flannel flowers','soft felt-like star-shaped blooms'],
+    [['キングプロテア','プロテア'],'king protea','large bowl-shaped bloom with pointed bracts and a fuzzy centre'],
+    [['リューカデンドロン'],'leucadendron','cone-like heads surrounded by colourful leafy bracts'],
+    [['ピンクッション','リューコスペルマム'],'pincushion protea','spherical heads of long protruding styles like pins'],
+    [['ダイアンサス','ナデシコ','撫子','ソネット'],'dianthus','small fringed-edged blooms'],
+    [['胡蝶蘭','コチョウラン'],'phalaenopsis orchids','arching sprays of flat moth-like orchid blooms'],
+    [['シンビジウム'],'cymbidium orchids','upright spikes of waxy orchid blooms with a patterned lip'],
+    [['デンファレ','デンドロビウム'],'dendrobium orchids','sprays of small flat orchid blooms'],
+    [['オンシジウム'],'oncidium orchids','airy sprays of tiny dancing-lady orchids'],
+    [['ムスカリ'],'muscari','small spikes of tiny bell-shaped flowers'],
+    [['ヒヤシンス'],'hyacinths','dense spikes of star-shaped fragrant florets'],
+    [['フリージア'],'freesias','arching stems of funnel-shaped florets'],
+    [['スズラン','鈴蘭'],'lily of the valley','tiny nodding bell-shaped flowers on arching stems'],
+    [['ライラック'],'lilac','cone-shaped clusters of tiny four-petalled florets'],
+    [['ケイトウ','鶏頭'],'celosia','velvety crested or plume-like flower heads'],
+    [['センニチコウ','千日紅'],'gomphrena','small round clover-like papery flower heads'],
+    [['リンドウ','竜胆'],'gentian','upright stems of bell-shaped flowers'],
+    [['エリンジウム'],'eryngium','spiky thistle-like heads with a spiny ruff'],
+    [['アマランサス'],'amaranthus','long drooping tassel-like flower chains'],
+    [['ベロニカ'],'veronica','slender tapering spikes of tiny florets'],
+    [['アスチルベ'],'astilbe','feathery plume-like flower spikes'],
+    [['ルピナス'],'lupins','tall dense spikes of pea-like florets'],
+    [['ジニア','百日草'],'zinnias','sturdy many-petalled blooms with a domed centre'],
+    [['ポピー','ケシ','アイスランドポピー'],'poppies','tissue-thin cup-shaped petals with a dark centre'],
+    [['マーガレット'],'marguerite daisies','daisy petals around a yellow centre'],
+    [['ブバルディア'],'bouvardia','clusters of small tubular star-shaped florets'],
+    [['ヘリクリサム'],'helichrysum','papery straw-like daisy blooms'],
+    [['オーニソガラム'],'ornithogalum','spikes of star-shaped flowers'],
+    [['ブプレウルム'],'bupleurum','airy lime-green small flower clusters'],
+    [['ビバーナム','スノーボール','オオデマリ'],'viburnum','round snowball clusters of small florets'],
+    [['セルリア'],'serruria','papery blushing-bride blooms'],
+    [['ヤグルマギク','矢車菊','セントーレア'],'cornflowers','fringed thistle-like florets'],
+    [['ラグラス','ウサギノシッポ'],'lagurus bunny tail grass','soft fluffy oval grass heads'],
+    [['ペッパーベリー'],'pepperberries','clusters of small round berries'],
+    [['ユキヤナギ'],'spiraea branches','arching branches covered in tiny flowers'],
+    [['桜','サクラ'],'cherry blossom branches','branches covered with delicate five-petalled blossoms'],
+    [['梅','ウメ'],'plum blossom branches','branches with small round five-petalled blossoms'],
+    [['菜の花'],'rapeseed flowers','clusters of small four-petalled flowers'],
+    [['水仙','スイセン'],'daffodils','trumpet-shaped centres surrounded by six petals'],
+    [['椿','ツバキ'],'camellias','rounded glossy-petalled blooms with yellow stamens'],
+    [['ルスカス'],'ruscus','glossy small oval leaves on long stems'],
+    [['レザーファン','レザーリーフ'],'leatherleaf fern','triangular glossy fern fronds'],
+    [['アイビー'],'ivy','trailing vines of lobed leaves'],
+    [['ドラセナ'],'dracaena leaves','long strap-like leaves'],
+    [['モンステラ'],'monstera leaves','large split heart-shaped leaves'],
+    [['ハラン'],'aspidistra leaves','broad long glossy leaves'],
+    [['グリーン','葉物'],'greenery','assorted green foliage']
+  ];
+  // 日本語名（含む）でいちばん長く一致する項目を探す
+  function flowerDict(f){
+    var jp=String(f.jp||''),best=null,bl=0;
+    FLOWER_DICT.forEach(function(e){e[0].forEach(function(a){if((jp===a||jp.indexOf(a)>=0)&&a.length>bl){best=e;bl=a.length;}});});
+    return best;
+  }
+  function isAsciiName(x){return !!x&&/^[\x20-\x7E]+$/.test(x);}
+  // 画像AI向けの英語名：辞書 → 手で入れた英語名 → 空（＝わからない花）
+  function enName(f){
+    var d=flowerDict(f);if(d)return d[1];
+    var manual=staffMode()?'':(f.localEn||'');
+    if(isAsciiName(manual))return manual;
+    return isAsciiName(f.en)?f.en:'';
+  }
+  // 画像の指示に入れる「色＋英語名（形の説明）」
+  function promptDesc(f){
+    var c=colorByJa(flowerColorJa(f)),d=flowerDict(f),n=enName(f)||f.jp;
+    var head=(c&&!isFoliage(f))?(c.en+' '+n):n;
+    return d?(head+' ('+d[2]+')'):head;
+  }
+  function joinAnd(a){return a.length<2?(a[0]||''):(a.slice(0,-1).join(', ')+' and '+a[a.length-1]);}
   function isFoliage(f){return /green|eucalyptus|foliage|leaf|leaves/i.test(f.en||'')||/グリーン|ユーカリ|葉/.test(f.jp||'');}
   function descJa(f){var c=flowerColorJa(f);return (c&&!isFoliage(f))?(c+'の'+f.jp):f.jp;}
-  function descEn(f){var c=colorByJa(flowerColorJa(f));return (c&&!isFoliage(f))?(c.en+' '+f.en):f.en;}
+  function descEn(f){var c=colorByJa(flowerColorJa(f)),n=enName(f)||f.jp;return (c&&!isFoliage(f))?(c.en+' '+n):n;}
   function pickedDescEn(){return picked.map(function(id){var f=fById(id);return f?descEn(f):'';}).filter(Boolean);}
   function pickedDescJa(){return picked.map(function(id){var f=fById(id);return f?descJa(f):'';}).filter(Boolean);}
   // 「主役の花」が選んだ花と同じなら、その色つきの名前を返す（違えば空）
@@ -1278,6 +1401,7 @@ textarea{resize:vertical;line-height:1.5}
     });
   });
   function jpToEn(n){
+    var d=flowerDict({jp:n});if(d)return d[1];
     for(var i=0;i<JPEN.length;i++){if(n.indexOf(JPEN[i][0])>=0)return JPEN[i][1];}
     return n;
   }
@@ -1431,7 +1555,7 @@ textarea{resize:vertical;line-height:1.5}
         var prev=localAll.filter(function(x){return x.jp===f.jp;})[0];
         return normFlower({id:'s:'+f.jp,jp:f.jp,en:f.en||f.jp,shared:true,
           localPhoto:prev?(prev.localPhoto||''):'', sharedPhoto:f.photo||'',
-          localColor:prev?(prev.localColor||''):'', sharedColor:f.color||''});
+          localColor:prev?(prev.localColor||''):'', sharedColor:f.color||'', localEn:prev?(prev.localEn||''):''});
       });
       var names={};shared.forEach(function(f){names[f.jp]=1;});
       flowers=shared.concat(localOnly.filter(function(f){return !names[f.jp];}));
@@ -1622,6 +1746,7 @@ textarea{resize:vertical;line-height:1.5}
       g.appendChild(b);
     });
     $('color-auto').hidden=!isManualColor(f);
+    renderEnBox(f);
     $('color-modal').hidden=false;$('color-modal').classList.add('open');
   }
   function closeColor(){$('color-modal').classList.remove('open');$('color-modal').hidden=true;colorTarget=null;}
@@ -1636,6 +1761,33 @@ textarea{resize:vertical;line-height:1.5}
     }
     f.localColor=ja||'';persistFlowers();updateColorChips();closeColor();
     toast((LANG==='en')?(fname(f)+': colour set to '+label+'.'):('「'+f.jp+'」の色を「'+label+'」にしました。'));
+  }
+  // 英語名の欄：辞書にある花は表示だけ、辞書にない花は英語名を入れられる
+  function renderEnBox(f){
+    var box=$('en-box'),d=flowerDict(f),en=(LANG==='en');
+    if(d){
+      box.innerHTML='<div class="note">'+(en?('Name used for the in-app image AI: <b>'+esc(d[1])+'</b> (built-in dictionary)')
+        :('アプリ内の画像AIでの名前：<b>'+esc(d[1])+'</b>（辞書に登録済み）'))+'</div>';
+      return;
+    }
+    box.innerHTML='<div class="label" style="margin-bottom:6px">'+(en?'English name (for the in-app image AI)':'英語名（アプリ内の画像生成用）')+'</div>'
+      +'<div style="display:flex;gap:8px"><input type="text" id="en-input" placeholder="'+(en?'e.g. snapdragon':'例：snapdragon')+'" value="'+esc(enName(f))+'" autocomplete="off" spellcheck="false">'
+      +'<button type="button" class="btn ghost sm" id="en-save" style="white-space:nowrap">'+(en?'Save':'保存')+'</button></div>'
+      +'<div class="note" style="margin-top:6px">'+(en?'This flower is not in the built-in dictionary, so the in-app image AI may draw a different flower. Enter its English name if you know it.'
+        :'この花は辞書にないため、アプリ内の画像生成で<b>別の花で描かれることがあります</b>。英語名がわかれば入れてください（ChatGPTは日本語名のままで大丈夫です）。')+'</div>';
+    $('en-save').addEventListener('click',function(){setFlowerEn(f,($('en-input').value||'').trim());});
+  }
+  function setFlowerEn(f,val){
+    if(val&&!isAsciiName(val)){toast('英語名は半角の英字で入れてください（例：snapdragon）。');return;}
+    if(staffMode()&&f.shared){
+      ghRun('英語名を保存中',async function(){
+        var data=await ghEditContent(function(d){var t=(d.flowers||[]).filter(function(x){return x.jp===f.jp;})[0];if(t)t.en=val||t.jp;},'英語名: '+f.jp+' → '+(val||'なし'));
+        applyShared(data);
+      }).then(function(ok){if(ok){toast('「'+f.jp+'」の英語名を保存しました（全員に反映）。');var nf=fById('s:'+f.jp);if(nf)renderEnBox(nf);}});
+      return;
+    }
+    f.localEn=val;persistFlowers();renderFsel();renderEnBox(f);
+    toast('「'+f.jp+'」の英語名を保存しました。');
   }
   $('color-close').addEventListener('click',closeColor);
   $('color-cancel').addEventListener('click',closeColor);
