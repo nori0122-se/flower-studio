@@ -19,8 +19,7 @@
     {
       "jp": "ガーベラ",
       "en": "gerbera daisies",
-      "photo": "images/flowers/gerbera-daisies-1791792762886.jpg",
-      "color": "クリーム"
+      "photo": ""
     },
     {
       "jp": "ユリ",
@@ -111,30 +110,6 @@
       "jp": "グリーン（葉物）",
       "en": "mixed greenery",
       "photo": ""
-    },
-    {
-      "jp": "アンスリウム",
-      "en": "アンスリウム",
-      "photo": "images/flowers/flower-1791792783793.jpg",
-      "color": "ラベンダー"
-    },
-    {
-      "jp": "モカラ",
-      "en": "モカラ",
-      "photo": "images/flowers/flower-1791792842835.jpg",
-      "color": "濃いピンク"
-    },
-    {
-      "jp": "ハイブリッドスターチス",
-      "en": "ハイブリッドスターチス",
-      "photo": "images/flowers/flower-1791792869247.jpg",
-      "color": "ピンク"
-    },
-    {
-      "jp": "キンギョソウ",
-      "en": "キンギョソウ",
-      "photo": "images/flowers/flower-1791792892833.jpg",
-      "color": "緑"
     }
   ],
   "gallery": []

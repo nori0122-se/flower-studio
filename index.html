@@ -144,8 +144,10 @@ textarea{resize:vertical;line-height:1.5}
 .fboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .fboard-head h2{margin:0 0 4px;font-family:var(--font-display);font-size:18px;color:var(--ink)}
 .fboard-actions{display:flex;align-items:center;gap:10px}
-.fb-addrow{display:flex;gap:8px;margin-top:14px;max-width:460px}
+.fb-addrow{display:flex;gap:8px;margin-top:14px;max-width:520px}
 .fb-addrow input{flex:1}
+.fb-addrow #fb-price{flex:0 0 120px;width:120px}
+@media (max-width:560px){.fb-addrow{flex-wrap:wrap}.fb-addrow #fb-new{flex:1 1 100%}.fb-addrow #fb-price{flex:1 1 auto;width:auto}}
 .fb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px}
 @media (max-width:560px){.fb-grid{grid-template-columns:repeat(3,1fr);gap:8px}.fboard{padding:14px}}
 .fcard{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper);transition:.16s}
@@ -155,6 +157,7 @@ textarea{resize:vertical;line-height:1.5}
 .fcard .ph{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--stage-1)}
 .fcard .noimg{width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:26px;background:radial-gradient(120% 90% at 50% 20%,var(--stage-1),var(--stage-2))}
 .fcard .nm{display:block;font-size:12.5px;padding:7px 4px;line-height:1.35}
+.fcard .pr{display:block;font-size:11.5px;font-weight:600;color:var(--sage-deep);margin:-5px 0 6px;line-height:1.3}
 .fcard .chk{position:absolute;top:6px;left:6px;width:22px;height:22px;border-radius:50%;background:var(--sage-deep);color:#fff;font-size:12px;line-height:22px;text-align:center;display:none}
 .fcard[aria-pressed="true"] .chk{display:block}
 .fcard-tools{display:flex;gap:4px;justify-content:center;padding:0 4px 8px}
@@ -225,6 +228,7 @@ textarea{resize:vertical;line-height:1.5}
       <div class="fb-grid" id="fb-grid"></div>
       <div class="fb-addrow">
         <input type="text" id="fb-new" data-i18n-ph="fb.newph" placeholder="入荷した花を追加（例：スカビオサ）">
+        <input type="text" id="fb-price" inputmode="numeric" data-i18n-ph="fb.priceph" placeholder="金額（例：300）" autocomplete="off">
         <button type="button" class="btn ghost sm" id="fb-add" data-i18n="fb.add">追加</button>
       </div>
     </div>
@@ -433,6 +437,28 @@ textarea{resize:vertical;line-height:1.5}
     </div>
   </div>
 </div>
+<!-- ===== 花材の編集（名前・金額） ===== -->
+<div class="modal" id="fedit-modal" hidden>
+  <div class="sheet" style="width:min(440px,100%)">
+    <div class="sheet-head">
+      <h2 id="fedit-title">花材の編集</h2>
+      <button class="x" id="fedit-close" aria-label="閉じる">×</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field"><div class="label" id="fedit-lbl-name">花の名前</div><input type="text" id="fedit-name" autocomplete="off"></div>
+      <p class="note" id="fedit-name-note" style="margin:6px 0 0" hidden></p>
+      <div class="field" style="margin-top:16px"><div class="label" id="fedit-lbl-price">金額（円）</div>
+        <input type="text" id="fedit-price" inputmode="numeric" autocomplete="off" placeholder="例：300">
+      </div>
+      <p class="note" id="fedit-note" style="margin:6px 0 0"></p>
+    </div>
+    <div class="sheet-foot">
+      <button type="button" class="btn ghost sm" id="fedit-del" style="margin-right:auto">この花を削除</button>
+      <button type="button" class="btn ghost sm" id="fedit-cancel">閉じる</button>
+      <button type="button" class="btn primary sm" id="fedit-save">保存</button>
+    </div>
+  </div>
+</div>
 <input type="file" id="fb-file" accept="image/*" class="sr-only">
 
 <!-- 印刷用（画面では非表示） -->
@@ -487,7 +513,7 @@ textarea{resize:vertical;line-height:1.5}
       'fb.title':'Choose from flowers in stock',
       'fb.note':'Tap the flowers you want (multiple OK).<br>We’re sorry — flowers without a photo are not in stock at the moment.',
       'fb.addlabel':'Add a flower','fb.newph':'Add a flower you have in stock (e.g. Scabiosa)','fb.add':'Add','fb.clear':'Clear selection','fb.done':'Use these flowers',
-      'fb.photo':'Photo','fb.unset':'Remove','fb.oos':'Not in stock',
+      'fb.photo':'Photo','fb.unset':'Remove','fb.oos':'Not in stock','fb.edit':'Edit','fb.priceph':'Price in yen (e.g. 300)',
       'type.bouquet':'Bouquet','type.arrangement':'Arrangement','type.wedding':'Wedding flowers',
       'gen.bouquet':'Generate bouquet photo','gen.arrangement':'Generate arrangement photo','gen.wedding':'Generate decoration photo',
       'noun.bouquet':'bouquet','noun.arrangement':'arrangement','noun.wedding':'decoration',
@@ -1034,12 +1060,30 @@ textarea{resize:vertical;line-height:1.5}
     if(f.localColor===undefined)f.localColor='';
     if(f.localEn===undefined)f.localEn='';
     if(f.sharedColor===undefined)f.sharedColor='';
+    if(f.localPrice===undefined)f.localPrice='';
+    if(f.sharedPrice===undefined)f.sharedPrice='';
+    // 金額：共有モードのスマホは全員共通の金額、それ以外は「この端末で入れた金額 → なければ共通の金額」
+    f.price=(staffMode()&&f.shared)?f.sharedPrice:(f.localPrice!==''?f.localPrice:f.sharedPrice);
     var shared=f.sharedPhoto?(previewPhotos[f.jp]||photoUrl(f.sharedPhoto)):'';
     // スタッフ端末は「全員に見えている状態」をそのまま表示する（その端末だけの写真は使わない）
     f.photo=staffMode()?shared:(f.localPhoto||shared||'');
     return f;
   }
   flowers.forEach(normFlower);
+  // 金額：「300」「３００」「1,200円」「¥300」などを数字にする（空欄は ''、数字でなければ null）
+  function parsePrice(v){
+    if(v===undefined||v===null)return '';
+    var t=String(v).replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);}).replace(/[,，、\s円¥￥]/g,'');
+    if(t==='')return '';
+    if(!/^\d{1,7}$/.test(t))return null;
+    return parseInt(t,10);
+  }
+  function sharedPriceOf(d){var p=parsePrice(d.price);return p===null?'':p;}
+  function priceText(p){
+    if(p===''||p===undefined||p===null)return '';
+    var n=Number(p);
+    return (LANG==='en')?('¥'+n.toLocaleString('en-US')):(n.toLocaleString('ja-JP')+'円');
+  }
   function persistFlowers(){try{localStorage.setItem(FKEY,JSON.stringify(flowers));}catch(e){toast('保存容量がいっぱいです。花材の写真を減らしてください。');}}
   var picked=[];
   function fById(id){for(var i=0;i<flowers.length;i++){if(flowers[i].id===id)return flowers[i];}return null;}
@@ -1314,7 +1358,8 @@ textarea{resize:vertical;line-height:1.5}
       if(!inStock)pick.setAttribute('aria-disabled','true');
       pick.innerHTML=(inStock?('<img class="ph" src="'+f.photo+'" alt="">')
         :('<div class="noimg"><span class="oos">'+L('現在入荷なし','fb.oos')+'</span></div>'))
-        +'<span class="nm">'+esc(fname(f))+'</span>';
+        +'<span class="nm">'+esc(fname(f))+'</span>'
+        +(f.price!==''&&f.price!==undefined?('<span class="pr">'+esc(priceText(f.price))+'</span>'):'');
       pick.addEventListener('click',function(){
         if(!f.photo){toast(oosMessage(f));return;}
         var i=picked.indexOf(f.id);
@@ -1344,25 +1389,9 @@ textarea{resize:vertical;line-height:1.5}
         });
         tools.appendChild(bo);
       }
-      var bd=document.createElement('button');bd.type='button';bd.className='mini';bd.textContent='×';
-      bd.addEventListener('click',function(){
-        if(staffMode()){
-          if(!confirm('「'+f.jp+'」を全員の花材一覧から削除しますか？'))return;
-          ghRun('花材を削除中',async function(){
-            var data=await ghEditContent(function(d){d.flowers=(d.flowers||[]).filter(function(x){return x.jp!==f.jp;});},'花材を削除: '+f.jp);
-            delete previewPhotos[f.jp];
-            var i=flowers.indexOf(f);if(i>=0)flowers.splice(i,1);
-            var pi=picked.indexOf(f.id);if(pi>=0)picked.splice(pi,1);
-            applyShared(data);
-          }).then(function(ok){if(ok)toast('「'+f.jp+'」を削除しました（全員に反映）。');});
-          return;
-        }
-        if(!confirm((LANG==='en')?('Remove '+fname(f)+' from the board?'):(f.jp+' を花材から削除しますか？')))return;
-        var i=flowers.indexOf(f);if(i>=0)flowers.splice(i,1);
-        var pi=picked.indexOf(f.id);if(pi>=0)picked.splice(pi,1);
-        persistFlowers();renderBoard();fbCount();renderFsel();
-      });
-      tools.appendChild(bd);
+      var be=document.createElement('button');be.type='button';be.className='mini';be.textContent=L('編集','fb.edit');
+      be.addEventListener('click',function(){openFlowerEdit(f);});
+      tools.appendChild(be);
       c.appendChild(pick);c.appendChild(chk);
       if(inStock){
         var cr=document.createElement('div');cr.className='fcolor-row';
@@ -1375,6 +1404,24 @@ textarea{resize:vertical;line-height:1.5}
       g.appendChild(c);
     });
     ensureColors();
+  }
+  // 花材の削除（編集画面の「この花を削除」から）
+  function deleteFlower(f,done){
+    if(staffMode()){
+      if(!confirm('「'+f.jp+'」を全員の花材一覧から削除しますか？'))return;
+      ghRun('花材を削除中',async function(){
+        var data=await ghEditContent(function(d){d.flowers=(d.flowers||[]).filter(function(x){return x.jp!==f.jp;});},'花材を削除: '+f.jp);
+        delete previewPhotos[f.jp];
+        var i=flowers.indexOf(f);if(i>=0)flowers.splice(i,1);
+        var pi=picked.indexOf(f.id);if(pi>=0)picked.splice(pi,1);
+        applyShared(data);
+      }).then(function(ok){if(ok){toast('「'+f.jp+'」を削除しました（全員に反映）。');done();}});
+      return;
+    }
+    if(!confirm((LANG==='en')?('Remove '+fname(f)+' from the board?'):(f.jp+' を花材から削除しますか？')))return;
+    var i=flowers.indexOf(f);if(i>=0)flowers.splice(i,1);
+    var pi=picked.indexOf(f.id);if(pi>=0)picked.splice(pi,1);
+    persistFlowers();renderBoard();fbCount();renderFsel();done();
   }
   $('fb-file').addEventListener('change',function(){
     var f=this.files&&this.files[0];this.value='';
@@ -1408,20 +1455,24 @@ textarea{resize:vertical;line-height:1.5}
   $('fb-add').addEventListener('click',function(){
     var n=$('fb-new').value.trim();
     if(!n){toast(L('花材の名前を入力してください。','ts.fb.name'));return;}
+    var pr=parsePrice($('fb-price').value);
+    if(pr===null){toast((LANG==='en')?'Please enter the price as a number (e.g. 300).':'金額は数字で入力してください（例：300）。');$('fb-price').focus();return;}
     if(staffMode()){
       if(flowers.some(function(x){return x.jp===n;})){toast('「'+n+'」はすでにあります。');return;}
       ghRun('花材を追加中',async function(){
-        var data=await ghEditContent(function(d){d.flowers=d.flowers||[];if(!d.flowers.some(function(x){return x.jp===n;}))d.flowers.push({jp:n,en:jpToEn(n),photo:''});},'花材を追加: '+n);
-        $('fb-new').value='';applyShared(data);
+        var data=await ghEditContent(function(d){d.flowers=d.flowers||[];if(!d.flowers.some(function(x){return x.jp===n;})){var nf={jp:n,en:jpToEn(n),photo:''};if(pr!=='')nf.price=pr;d.flowers.push(nf);}},'花材を追加: '+n+(pr!==''?('（'+pr+'円）'):''));
+        $('fb-new').value='';$('fb-price').value='';applyShared(data);
       }).then(function(ok){if(ok)toast('「'+n+'」を追加しました（全員に反映）。');});
       return;
     }
-    flowers.push({id:'f'+Date.now().toString(36),jp:n,en:jpToEn(n),photo:''});
-    $('fb-new').value='';persistFlowers();renderBoard();toast((LANG==='en')?(n+' added.'):(n+' を追加しました。'));
+    if(flowers.some(function(x){return x.jp===n;})){toast((LANG==='en')?(n+' is already on the board.'):('「'+n+'」はすでにあります。'));return;}
+    flowers.push(normFlower({id:'f'+Date.now().toString(36),jp:n,en:jpToEn(n),photo:'',localPrice:pr}));
+    $('fb-new').value='';$('fb-price').value='';persistFlowers();renderBoard();toast((LANG==='en')?(n+' added.'):(n+' を追加しました。'));
   });
   // 花材ボードは画面上部に常に表示
   $('fb-clear').addEventListener('click',function(){picked=[];renderBoard();fbCount();renderFsel();});
   $('fb-new').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();$('fb-add').click();}});
+  $('fb-price').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();$('fb-add').click();}});
   renderBoard();fbCount();renderFsel();
 
   /* ===== ギャラリーモード ===== */
@@ -1555,7 +1606,8 @@ textarea{resize:vertical;line-height:1.5}
         var prev=localAll.filter(function(x){return x.jp===f.jp;})[0];
         return normFlower({id:'s:'+f.jp,jp:f.jp,en:f.en||f.jp,shared:true,
           localPhoto:prev?(prev.localPhoto||''):'', sharedPhoto:f.photo||'',
-          localColor:prev?(prev.localColor||''):'', sharedColor:f.color||'', localEn:prev?(prev.localEn||''):''});
+          localColor:prev?(prev.localColor||''):'', sharedColor:f.color||'', localEn:prev?(prev.localEn||''):'',
+          localPrice:prev&&prev.localPrice!==undefined?prev.localPrice:'', sharedPrice:sharedPriceOf(f)});
       });
       var names={};shared.forEach(function(f){names[f.jp]=1;});
       flowers=shared.concat(localOnly.filter(function(f){return !names[f.jp];}));
@@ -1793,6 +1845,80 @@ textarea{resize:vertical;line-height:1.5}
   $('color-cancel').addEventListener('click',closeColor);
   $('color-auto').addEventListener('click',function(){if(colorTarget)setFlowerColor(colorTarget,'');});
   $('color-modal').addEventListener('click',function(e){if(e.target===$('color-modal'))closeColor();});
+
+  /* ===== 花材の編集（名前・金額をあとから変更） ===== */
+  var editTarget=null;
+  function openFlowerEdit(f){
+    editTarget=f;
+    var en=(LANG==='en'), sharedOnly=(f.shared&&!staffMode());
+    $('fedit-title').textContent=en?('Edit — '+fname(f)):('「'+f.jp+'」の編集');
+    $('fedit-lbl-name').textContent=en?'Flower name (Japanese)':'花の名前';
+    $('fedit-lbl-price').textContent=en?'Price (yen)':'金額（円）';
+    $('fedit-name').value=f.jp;
+    // 全員共通の花の名前は、共有モードのスマホでだけ変えられる（ここで変えても元に戻ってしまうため）
+    $('fedit-name').disabled=sharedOnly;
+    $('fedit-name-note').hidden=!sharedOnly;
+    $('fedit-name-note').textContent=en?'The name of a shared flower can only be changed on a staff device (sharing mode).'
+      :'全員共通の花なので、名前は「共有モード」のスマホから変更してください。';
+    $('fedit-price').value=(f.price===''||f.price===undefined)?'':String(f.price);
+    $('fedit-price').placeholder=en?'e.g. 300':'例：300';
+    $('fedit-note').innerHTML=en?'Leave the price empty to show no price.'
+      :('数字だけで入れてください（「円」はなくてOK）。空にすると金額は表示されません。'
+        +(staffMode()&&f.shared?'<br>※共有モードなので、変更は<b>全員に反映</b>されます。':''));
+    $('fedit-save').textContent=en?'Save':'保存';
+    $('fedit-cancel').textContent=en?'Close':'閉じる';
+    $('fedit-del').textContent=en?'Delete this flower':'この花を削除';
+    $('fedit-modal').hidden=false;$('fedit-modal').classList.add('open');
+    setTimeout(function(){(sharedOnly?$('fedit-price'):$('fedit-name')).focus();},50);
+  }
+  function closeFlowerEdit(){$('fedit-modal').classList.remove('open');$('fedit-modal').hidden=true;editTarget=null;}
+  // 名前を変えたとき、辞書にない花の英語名は新しい名前に合わせ直す（手で入れた英語名は残す）
+  function renamedEn(oldEn,oldJp,newJp){return (!isAsciiName(oldEn)||oldEn===jpToEn(oldJp))?jpToEn(newJp):oldEn;}
+  function saveFlowerEdit(){
+    var f=editTarget;if(!f)return;
+    var en=(LANG==='en');
+    var n=$('fedit-name').disabled?f.jp:$('fedit-name').value.trim();
+    var pr=parsePrice($('fedit-price').value);
+    if(!n){toast(L('花材の名前を入力してください。','ts.fb.name'));return;}
+    if(pr===null){toast(en?'Please enter the price as a number (e.g. 300).':'金額は数字で入力してください（例：300）。');return;}
+    var old=f.jp;
+    if(n!==old&&flowers.some(function(x){return x!==f&&x.jp===n;})){toast(en?(n+' is already on the board.'):('「'+n+'」はすでにあります。'));return;}
+    var msgDone=en?(fname(f)+' updated.')
+      :(n!==old?('「'+old+'」を「'+n+'」に変更しました（'+(pr!==''?priceText(pr):'金額なし')+'）。')
+              :('「'+n+'」の金額を'+(pr!==''?(priceText(pr)+'にしました。'):'なしにしました。')));
+    if(staffMode()&&f.shared){
+      ghRun('変更を保存中',async function(){
+        var data=await ghEditContent(function(d){
+          var list=d.flowers||[];
+          var t=list.filter(function(x){return x.jp===old;})[0];
+          if(!t)throw {userMsg:'「'+old+'」が見つかりませんでした。画面を再読み込みしてください。'};
+          if(n!==old){
+            if(list.some(function(x){return x.jp===n;}))throw {userMsg:'「'+n+'」はすでにあります。'};
+            t.en=renamedEn(t.en,old,n);t.jp=n;
+          }
+          if(pr==='')delete t.price;else t.price=pr;
+        },'編集: '+old+(n!==old?(' → '+n):'')+'（'+(pr!==''?(pr+'円'):'金額なし')+'）');
+        if(n!==old){
+          // 選択中・プレビュー写真も新しい名前に付け替える
+          picked=picked.map(function(id){return id==='s:'+old?('s:'+n):id;});
+          if(previewPhotos[old]){previewPhotos[n]=previewPhotos[old];delete previewPhotos[old];}
+          f.jp=n;f.id='s:'+n;
+        }
+        applyShared(data);
+      }).then(function(ok){if(ok){closeFlowerEdit();toast(msgDone+(en?'':'（全員に反映）'));}});
+      return;
+    }
+    if(n!==old){f.en=renamedEn(f.en,old,n);f.jp=n;}
+    f.localPrice=pr;normFlower(f);
+    persistFlowers();renderBoard();fbCount();renderFsel();closeFlowerEdit();
+    toast(msgDone);
+  }
+  $('fedit-save').addEventListener('click',saveFlowerEdit);
+  $('fedit-close').addEventListener('click',closeFlowerEdit);
+  $('fedit-cancel').addEventListener('click',closeFlowerEdit);
+  $('fedit-del').addEventListener('click',function(){if(editTarget)deleteFlower(editTarget,closeFlowerEdit);});
+  $('fedit-modal').addEventListener('click',function(e){if(e.target===$('fedit-modal'))closeFlowerEdit();});
+  ['fedit-name','fedit-price'].forEach(function(id){$(id).addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();saveFlowerEdit();}});});
 
   applyLang();
   loadShared();
