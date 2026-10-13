@@ -152,6 +152,9 @@ textarea{resize:vertical;line-height:1.5}
 .fb-addrow{display:flex;gap:8px;margin-top:14px;max-width:520px}
 .fb-addrow input{flex:1}
 .fb-addrow #fb-price{flex:0 0 120px;width:120px}
+.budget-row{display:flex;align-items:center;gap:8px}.budget-row input{max-width:180px}
+.budget-view{font-size:12px;line-height:1.7;color:var(--ink-soft);margin-top:6px}
+.budget-view b{color:var(--ink)}.budget-view .warn{color:#B4533C}
 @media (max-width:560px){.fb-addrow{flex-wrap:wrap}.fb-addrow #fb-new{flex:1 1 100%}.fb-addrow #fb-price{flex:1 1 auto;width:auto}}
 .fb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px}
 @media (max-width:560px){.fb-grid{grid-template-columns:repeat(3,1fr);gap:8px}.fboard{padding:14px}}
@@ -284,6 +287,11 @@ textarea{resize:vertical;line-height:1.5}
 
         <div class="field"><div class="label" data-i18n="lbl.flowers">選んだ花材</div>
           <div class="fsel" id="fsel-view" style="margin-top:0"></div>
+        </div>
+
+        <div class="field"><div class="label" data-i18n="lbl.budget">ご予算（任意）</div>
+          <div class="budget-row"><input type="text" id="budget" inputmode="numeric" autocomplete="off" data-i18n-ph="ph.budget" placeholder="例：5000"><span data-i18n="unit.yen">円</span></div>
+          <div class="budget-view" id="budget-view"></div>
         </div>
 
         <div class="field"><div class="label" data-i18n="lbl.comment">ご要望・コメント（任意）</div>
@@ -511,6 +519,7 @@ textarea{resize:vertical;line-height:1.5}
       'ph.title':'Product name (e.g. Seasonal bouquet)','ph.price':'Price (e.g. $30)',
       'btn.regen':'Generate another','btn.saveimg':'Save image','btn.savecard':'Save customer card',
       'btn.togallery':'Save to gallery','btn.toorder':'Create order form',
+      'lbl.budget':'Budget (optional)','ph.budget':'e.g. 5000','unit.yen':'yen',
       'note.ai':'* Generation can take longer when busy.',
       'ai.notice':'* This is an AI-generated image. The bouquet we actually make will differ slightly in flower colour, shape and number of stems. Thank you for your understanding.',
       'om.imgnote':'* The image is for reference only (AI-generated images differ slightly from the actual bouquet).',
@@ -670,6 +679,7 @@ textarea{resize:vertical;line-height:1.5}
         $(pair[0]).style.display=on?'flex':'';
       });
       $('gen').textContent=L(GENLABEL[t.k],'gen.'+t.k);
+      renderBudget();
     });
     tEl.appendChild(b);
   });
@@ -729,6 +739,55 @@ textarea{resize:vertical;line-height:1.5}
     var arr=picked.map(function(id){var f=fById(id);return f?promptDesc(f):'';}).filter(Boolean);
     return arr.length?joinAnd(arr):'roses, ranunculus, lisianthus, spray roses and seasonal filler flowers';
   }
+  /* ===== ご予算 → 花ごとの本数 =====
+     花材の金額（未入力は1本500円）で、ご予算に入る本数を花ごとに割り振る。
+     1本ずつ順番に足していく（主役の花は2本ずつ）ので、どの花もだいたい同じくらいの本数になる。 */
+  var DEFAULT_STEM=500;
+  function stemPrice(f){return (f.price===''||f.price===undefined||f.price===null)?DEFAULT_STEM:Number(f.price);}
+  function budgetPlan(){
+    var b=parsePrice($('budget').value);
+    if(b===null)return {invalid:true};
+    if(b===''||b<=0)return null;
+    var list=picked.map(fById).filter(Boolean);
+    if(!list.length){var n=Math.floor(b/DEFAULT_STEM);return {budget:b,generic:true,total:n,cost:n*DEFAULT_STEM,items:[]};}
+    var mainV=(gen.type==='bouquet')?$('mainflower').value:'';
+    var items=list.map(function(f){return {f:f,price:stemPrice(f),assumed:stemPrice(f)===DEFAULT_STEM&&(f.price===''||f.price===undefined||f.price===null),n:0,w:(mainV&&f.en===mainV)?2:1};});
+    var left=b,grew=true;
+    while(grew){
+      grew=false;
+      items.forEach(function(it){for(var k=0;k<it.w;k++){if(left>=it.price&&it.price>0){it.n++;left-=it.price;grew=true;}}});
+    }
+    var total=items.reduce(function(a,it){return a+it.n;},0);
+    return {budget:b,items:items,total:total,cost:b-left,short:items.some(function(it){return it.n===0;})};
+  }
+  // 本数に合わせた大きさのことば（画像AI用）
+  function sizeWord(n){return n<=5?'petite':n<=12?'small':n<=24?'medium-sized':n<=40?'large':'very large, lavish';}
+  function renderBudget(){
+    var el=$('budget-view'),pl=budgetPlan(),en=(LANG==='en');
+    if(!pl){el.innerHTML=en?'Enter a budget to size the bouquet to it (flowers without a price are counted at ¥500 per stem).'
+      :'ご予算を入れると、その金額に合う本数で画像を作ります（金額が未入力の花は1本500円で計算）。';return;}
+    if(pl.invalid){el.innerHTML='<span class="warn">'+(en?'Please enter the budget as a number (e.g. 5000).':'ご予算は数字で入力してください（例：5000）。')+'</span>';return;}
+    if(pl.generic){
+      el.innerHTML=pl.total>0?(en?('Guide: about <b>'+pl.total+' stems</b> of classic flowers (counted at ¥500 per stem).')
+        :('目安：定番の花 約<b>'+pl.total+'本</b>（1本500円で計算）'))
+        :('<span class="warn">'+(en?'The budget is less than one stem (¥500).':'ご予算が1本分（500円）に足りません。')+'</span>');
+      return;
+    }
+    if(pl.short){
+      el.innerHTML='<span class="warn">'+(en?'The budget is not enough for one stem of each chosen flower. Please raise the budget or choose fewer flowers. (The image will be made without the budget.)'
+        :'ご予算では、選んだ花を1本ずつ入れることができません。ご予算を増やすか、花を減らしてください（このままだと予算なしで作ります）。')+'</span>';
+      return;
+    }
+    var parts=pl.items.map(function(it){
+      var nm=en?descEn(it.f):descJa(it.f);
+      return en?(esc(nm)+' <b>'+it.n+'</b> ('+priceText(it.n*it.price)+')'):(esc(nm)+' <b>'+it.n+'本</b>（'+priceText(it.n*it.price)+'）');
+    });
+    var assumed=pl.items.some(function(it){return it.assumed;});
+    el.innerHTML=(en?'Guide: ':'目安：')+parts.join(en?', ':'・')+'<br>'
+      +(en?('Total <b>'+pl.total+' stems · '+priceText(pl.cost)+'</b> (budget '+priceText(pl.budget)+')')
+          :('合計 <b>'+pl.total+'本・'+priceText(pl.cost)+'</b>（ご予算 '+priceText(pl.budget)+'）'))
+      +(assumed?('<br>'+(en?'* Flowers without a price are counted at ¥500 per stem.':'※ 金額が未入力の花は1本500円で計算しています。')):'');
+  }
   // 画像AIはバラを描きがちなので、バラを選んでいないときは「バラなし」と明記する
   function noRoseTxt(){
     if(!picked.length)return '';
@@ -739,22 +798,28 @@ textarea{resize:vertical;line-height:1.5}
   function onlyTxt(){return picked.length?(noRoseTxt()+'no other flower types, no other colours, '):'';}
   function buildPrompt(){
     var fl=flowerList(),only=onlyTxt();
+    // ご予算があれば、花ごとの本数と全体の大きさを伝える
+    var pl=budgetPlan(),size='',stems='';
+    if(pl&&!pl.invalid&&!pl.short&&pl.total>0){
+      size=sizeWord(pl.total)+' ';stems=' with about '+pl.total+' stems in total';
+      if(!pl.generic)fl=joinAnd(pl.items.map(function(it){return it.n+' '+(it.n===1?'stem':'stems')+' of '+promptDesc(it.f);}));
+    }
     if(gen.type==='wedding'){
       var place=WPLACE[+$('wplace').value]||WPLACE[0];
       var taste=WTASTE[+$('wtaste').value]||WTASTE[0];
-      return withExtra('real photograph of wedding floral decoration by a professional event florist, made '+(picked.length?'only ':'')+'of '+fl+', '+only+
+      return withExtra('real photograph of '+size+'wedding floral decoration by a professional event florist'+stems+', made '+(picked.length?'only ':'')+'of '+fl+', '+only+
         place.en+', '+taste.en+', with foliage, tasteful and restrained, not overcrowded, elegant banquet hall, '+PHOTO_REAL+', no people');
     }
     if(gen.type==='arrangement'){
       var ast=ARRSTYLE[+$('arrstyle').value]||ARRSTYLE[0];
       var att=ARRTASTE[+$('arrtaste').value]||ARRTASTE[0];
-      return withExtra('real photograph of a florist flower arrangement made '+(picked.length?'only ':'')+'of '+fl+', '+only+
+      return withExtra('real photograph of a '+size+'florist flower arrangement'+stems+', made '+(picked.length?'only ':'')+'of '+fl+', '+only+
         'a little fresh foliage, '+ast.en+', '+att.en+', natural asymmetry, varied bloom sizes, on a plain neutral background, '+PHOTO_REAL);
     }
     var main=$('mainflower').value;
     var mainEn=main?(mainMatch('en')||main):'';
-    return withExtra('real photograph of a florist\'s hand-tied bouquet made '+(picked.length?'only ':'')+'of '+fl+
-      (mainEn?(', with plenty of '+mainEn):'')+', '+only+
+    return withExtra('real photograph of a '+size+'florist\'s hand-tied bouquet'+stems+', made '+(picked.length?'only ':'')+'of '+fl+
+      ((mainEn&&!stems)?(', with plenty of '+mainEn):'')+', '+only+
       (picked.length?'a little green foliage, ':'mixed with eucalyptus and filler greenery, ')+
       $('style').value+', spiral stems gathered at a binding point, natural asymmetry, varied bloom sizes, '+
       'lying on a rustic wooden table in a flower shop, product photo, no people, no hands, '+PHOTO_REAL);
@@ -884,6 +949,7 @@ textarea{resize:vertical;line-height:1.5}
     if(!src)return;
     $('of-img').src=src;
     ['of-name','of-contact','of-email','of-date','of-qty','of-budget','of-use','of-note'].forEach(function(id){$(id).value='';});
+    var bg=parsePrice($('budget').value);if(bg)$('of-budget').value=priceText(bg);
     $('order-modal').hidden=false;$('order-modal').classList.add('open');
   }
   function closeOrder(){$('order-modal').classList.remove('open');$('order-modal').hidden=true;}
@@ -1374,6 +1440,7 @@ textarea{resize:vertical;line-height:1.5}
   }
 
   function renderFsel(){
+    renderBudget();
     var el=$('fsel-view');
     if(!picked.length){el.innerHTML='<span class="note">'+L('未選択（定番の花で作ります）','fsel.none')+'</span>';return;}
     el.innerHTML=picked.map(function(id){var f=fById(id);if(!f)return '';var t=(LANG==='en')?descEn(f).replace(/\b\w/g,function(c){return c.toUpperCase();}):descJa(f);return '<span class="chip sm" aria-pressed="true" style="pointer-events:none">'+esc(t)+'</span>';}).join('');
@@ -1546,6 +1613,8 @@ textarea{resize:vertical;line-height:1.5}
     $('fb-new').value='';$('fb-price').value='';persistFlowers();renderBoard();toast((LANG==='en')?(n+' added.'):(n+' を追加しました。'));
   });
   // 花材ボードは画面上部に常に表示
+  $('budget').addEventListener('input',renderBudget);
+  $('mainflower').addEventListener('change',renderBudget);
   $('fb-clear').addEventListener('click',function(){picked=[];renderBoard();fbCount();renderFsel();});
   $('fb-new').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();$('fb-add').click();}});
   $('fb-price').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();$('fb-add').click();}});
@@ -1830,6 +1899,13 @@ textarea{resize:vertical;line-height:1.5}
                        :(en?'florist’s choice (e.g. roses, carnations, lisianthus, greenery)':'おまかせ（バラ、カーネーション、トルコキキョウ、グリーンなど）');
     var note=($('comment').value||'').trim();
     var main=$('mainflower').value?selText('mainflower'):'';
+    var pl=budgetPlan(),cnt='';
+    if(pl&&!pl.invalid&&!pl.short&&pl.total>0){
+      if(pl.generic)cnt=en?('about '+pl.total+' stems in total (budget '+priceText(pl.budget)+')'):('合計 約'+pl.total+'本（ご予算'+priceText(pl.budget)+'）');
+      else cnt=pl.items.map(function(it){return en?(it.n+' × '+descEn(it.f)):(descJa(it.f)+' '+it.n+'本');}).join(en?', ':'、')
+        +(en?(' — '+pl.total+' stems in total (budget '+priceText(pl.budget)+'); make the volume match this number of stems')
+            :('（合計'+pl.total+'本・ご予算'+priceText(pl.budget)+'。この本数に合ったボリュームで）'));
+    }
     if(!en){
       if(t==='wedding'){
         out.push('結婚式の会場装飾を、プロのフローリストが実際に飾ったような「本物の写真」の画像で作ってください。','',
@@ -1843,6 +1919,7 @@ textarea{resize:vertical;line-height:1.5}
         if(main){var mj=mainMatch('ja');out.push('【主役】'+(mj?(mj+'を多めに'):main));}
         out.push('【スタイル】'+selText('style'));
       }
+      if(cnt)out.push('【本数】'+cnt);
       if(note)out.push('【ご要望】'+note);
       if(withRef)out.splice(1,0,'',
         '添付した見本画像の花（'+fl.map(function(x,i){return circledNum(i);}).join('')+'）だけを使ってください。花の種類・色・形・咲き具合は、写真にできるだけ忠実に再現してください。'
@@ -1860,6 +1937,7 @@ textarea{resize:vertical;line-height:1.5}
         if(main){var me=mainMatch('en');out.push('Main flower: '+(me?('plenty of '+me):main));}
         out.push('Style: '+selText('style'));
       }
+      if(cnt)out.push('Stems: '+cnt);
       if(note)out.push('Requests: '+note);
       if(withRef)out.splice(1,0,'',
         'Use only the flowers shown in the attached reference image ('+fl.map(function(x,i){return circledNum(i);}).join('')+'). Reproduce their type, colour, shape and stage of bloom as faithfully as possible. '
