@@ -123,7 +123,10 @@ textarea{resize:vertical;line-height:1.5}
 
 .gpt-steps{margin:0 0 12px;padding-left:20px;font-size:13px;color:var(--ink-soft);line-height:1.8}
 #gpt-prompt{min-height:240px;font-size:13px;line-height:1.65}
-#to-chatgpt+.note{margin-top:-6px}
+#to-chatgpt+.note{margin-top:-6px;line-height:1.7}
+.linkbtn{align-self:flex-start;margin-top:-10px;border:0;background:none;padding:0;font:inherit;font-size:12px;color:var(--sage-deep);text-decoration:underline;cursor:pointer}
+#gpt-modal details{margin-top:12px}#gpt-modal summary{cursor:pointer;font-size:13px;color:var(--ink-soft)}
+#gpt-modal details textarea{margin-top:8px}
 .ai-notice{font-size:12px;line-height:1.6;color:var(--ink);background:var(--stage-1);border:1px solid var(--line);border-left:3px solid var(--sage-deep);border-radius:9px;padding:8px 11px;margin:0 0 10px}
 #gpt-ref{margin:0 0 14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
 #gpt-ref img{display:block;width:100%;max-width:420px;margin:0 auto 10px;border-radius:9px;border:1px solid var(--line)}
@@ -148,7 +151,16 @@ textarea{resize:vertical;line-height:1.5}
 .fboard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:20px;box-shadow:0 10px 30px -24px var(--shadow)}
 .fboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .fboard-head h2{margin:0 0 4px;font-family:var(--font-display);font-size:18px;color:var(--ink)}
-.fboard-actions{display:flex;align-items:center;gap:10px}
+.fboard-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.fb-ov{margin-bottom:14px}
+.ov-pick{position:relative;display:block;width:100%;border:0;padding:0;background:var(--stage-1);border-radius:14px;overflow:hidden;cursor:pointer}
+.ov-pick img{display:block;width:100%;max-height:62vh;object-fit:cover}
+.ov-cap{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);text-align:center;line-height:1.4;
+  background:rgba(32,30,24,.78);color:#fff;font-family:inherit;font-size:13px;padding:8px 14px;border-radius:999px;box-shadow:0 6px 18px -8px rgba(0,0,0,.5)}
+.ov-tools{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+.ov-tools .mini{font-size:11px;padding:3px 9px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);border-radius:7px;cursor:pointer;font-family:inherit}
+#fb-toggle{display:block;margin:12px auto 0}
+@media (max-width:560px){.ov-cap{font-size:12px;padding:7px 12px;bottom:10px}}
 .fb-addrow{display:flex;gap:8px;margin-top:14px;max-width:520px}
 .fb-addrow input{flex:1}
 .fb-addrow #fb-price{flex:0 0 120px;width:120px}
@@ -158,6 +170,8 @@ textarea{resize:vertical;line-height:1.5}
 @media (max-width:560px){.fb-addrow{flex-wrap:wrap}.fb-addrow #fb-new{flex:1 1 100%}.fb-addrow #fb-price{flex:1 1 auto;width:auto}}
 .fb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px}
 @media (max-width:560px){.fb-grid{grid-template-columns:repeat(3,1fr);gap:8px}.fboard{padding:14px}}
+@media (max-width:560px){.fcard-tools{gap:3px;padding:0 3px 7px}.fcard-tools .mini{font-size:10px;padding:3px 5px}}
+.fb-sep{grid-column:1/-1;font-size:12px;color:var(--ink-soft);letter-spacing:.06em;padding:10px 2px 0;border-top:1px dashed var(--line);margin-top:4px}
 .fcard{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper);transition:.16s}
 .fcard:hover{border-color:var(--sage)}
 .fcard[aria-pressed="true"]{border-color:var(--sage-deep);box-shadow:0 0 0 2px var(--sage-deep)}
@@ -168,8 +182,8 @@ textarea{resize:vertical;line-height:1.5}
 .fcard .pr{display:block;font-size:11.5px;font-weight:600;color:var(--sage-deep);margin:-5px 0 6px;line-height:1.3}
 .fcard .chk{position:absolute;top:6px;left:6px;width:22px;height:22px;border-radius:50%;background:var(--sage-deep);color:#fff;font-size:12px;line-height:22px;text-align:center;display:none}
 .fcard[aria-pressed="true"] .chk{display:block}
-.fcard-tools{display:flex;gap:4px;justify-content:center;padding:0 4px 8px}
-.fcard-tools .mini{font-size:10.5px;padding:3px 7px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);border-radius:7px;cursor:pointer;font-family:inherit}
+.fcard-tools{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;padding:0 4px 8px}
+.fcard-tools .mini{white-space:nowrap;font-size:10.5px;padding:3px 7px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);border-radius:7px;cursor:pointer;font-family:inherit}
 .fcard-tools .mini:hover{border-color:var(--sage);color:var(--ink)}
 .fsel{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
 .fcard.out{background:var(--stage-2)}
@@ -230,15 +244,27 @@ textarea{resize:vertical;line-height:1.5}
         <div class="fboard-actions">
           <span class="note" id="fb-count"></span>
           <button type="button" class="btn ghost sm" id="fb-clear" data-i18n="fb.clear">選択をクリア</button>
+          <button type="button" class="btn ghost sm" id="ov-add" title="入荷中の花をまとめて撮った写真を入れる">全体写真</button>
           <button type="button" class="btn ghost sm" id="staff-btn" title="スタッフ設定">🔑</button>
         </div>
       </div>
+      <!-- 入荷中の花をまとめて撮った「全体写真」。タップすると1本ずつの写真（一覧）が開く -->
+      <div class="fb-ov" id="fb-ov" hidden>
+        <button type="button" class="ov-pick" id="ov-pick"><img id="ov-img" alt="入荷中の花（全体）"><span class="ov-cap" id="ov-cap"></span></button>
+        <div class="ov-tools">
+          <button type="button" class="mini" id="ov-change">全体写真を変更</button>
+          <button type="button" class="mini" id="ov-remove">外す</button>
+        </div>
+      </div>
+      <div id="fb-list">
       <div class="fb-grid" id="fb-grid"></div>
       <div class="fb-addrow">
         <input type="text" id="fb-new" data-i18n-ph="fb.newph" placeholder="入荷した花を追加（例：スカビオサ）">
         <input type="text" id="fb-price" inputmode="numeric" data-i18n-ph="fb.priceph" placeholder="金額（例：300）" autocomplete="off">
         <button type="button" class="btn ghost sm" id="fb-add" data-i18n="fb.add">追加</button>
       </div>
+      </div>
+      <button type="button" class="btn ghost sm" id="fb-toggle" hidden></button>
     </div>
 
     <div class="layout">
@@ -300,7 +326,8 @@ textarea{resize:vertical;line-height:1.5}
         </div>
 
         <button type="button" class="btn primary" id="to-chatgpt" data-i18n="btn.chatgpt">✨ ChatGPTで高画質に作る（おすすめ）</button>
-        <div class="note" data-i18n="note.chatgpt">ChatGPTを使うと、実際の花屋さんのような写真レベルの画像が作れます（指示文はこのアプリが自動で作ります）。</div>
+        <div class="note" id="gpt-guide"></div>
+        <button type="button" class="linkbtn" id="gpt-check">見本画像・指示文を確認する</button>
         <button class="btn ghost" id="gen">写真を生成する</button>
       </div>
 
@@ -394,19 +421,16 @@ textarea{resize:vertical;line-height:1.5}
         <div class="label" id="gpt-ref-lbl">見本画像（選んだ花の写真）</div>
         <img id="gpt-ref-img" alt="選んだ花の見本画像">
         <div class="note" id="gpt-ref-note"></div>
-        <div class="acts">
-          <button type="button" class="btn primary sm" id="gpt-share" hidden>ChatGPTに送る</button>
-          <button type="button" class="btn ghost sm" id="gpt-save">見本画像を保存</button>
-        </div>
       </div>
-      <ol class="gpt-steps" id="gpt-steps"></ol>
-      <textarea id="gpt-prompt" rows="12" readonly></textarea>
+      <p class="note" id="gpt-steps" style="margin:0;font-size:13px;line-height:1.7"></p>
+      <details><summary id="gpt-sum">指示文を見る</summary><textarea id="gpt-prompt" rows="12" readonly></textarea></details>
       <div class="ai-notice" style="margin:12px 0 0" data-i18n="gpt.notice">※ ChatGPTで作る画像もAIによる生成イメージです。写真を見本にしても、実際の花とは色・形・本数などが若干異なります。</div>
     </div>
     <div class="sheet-foot">
       <button type="button" class="btn ghost sm" id="gpt-cancel" data-i18n="btn.close">閉じる</button>
       <button type="button" class="btn ghost sm" id="gpt-copy" data-i18n="gpt.copy">指示文をコピー</button>
-      <button type="button" class="btn primary sm" id="gpt-open" data-i18n="gpt.open">ChatGPTを開く</button>
+      <button type="button" class="btn ghost sm" id="gpt-save" hidden>見本画像を保存</button>
+      <button type="button" class="btn primary sm" id="gpt-go">ChatGPTで作る</button>
     </div>
   </div>
 </div>
@@ -481,6 +505,7 @@ textarea{resize:vertical;line-height:1.5}
   </div>
 </div>
 <input type="file" id="fb-file" accept="image/*" class="sr-only">
+<input type="file" id="ov-file" accept="image/*" class="sr-only">
 
 <!-- 印刷用（画面では非表示） -->
 <div id="print-area"></div>
@@ -489,7 +514,7 @@ textarea{resize:vertical;line-height:1.5}
 (function(){
   "use strict";
   var $=function(id){return document.getElementById(id);};
-  function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show');},2600);}
+  function toast(m,ms){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show');},ms||2600);}
 
   /* ===== 言語切り替え（日本語 / English） ===== */
   var LANG='ja';
@@ -1140,7 +1165,7 @@ textarea{resize:vertical;line-height:1.5}
   }
   // 使わなくなった作品写真を GitHub から消す（失敗しても作品の削除はできているので気にしない）
   async function ghDeleteFile(path,msg){
-    if(!/^images\/gallery\//.test(path))return;
+    if(!/^images\/(gallery|overview)\//.test(path))return;
     try{
       var r=await ghApi('/contents/'+path+'?ref='+encodeURIComponent(GH.branch),{cache:'no-store'});
       if(!r.ok)return;
@@ -1440,7 +1465,7 @@ textarea{resize:vertical;line-height:1.5}
   }
 
   function renderFsel(){
-    renderBudget();
+    renderBudget();scheduleRef();
     var el=$('fsel-view');
     if(!picked.length){el.innerHTML='<span class="note">'+L('未選択（定番の花で作ります）','fsel.none')+'</span>';return;}
     el.innerHTML=picked.map(function(id){var f=fById(id);if(!f)return '';var t=(LANG==='en')?descEn(f).replace(/\b\w/g,function(c){return c.toUpperCase();}):descJa(f);return '<span class="chip sm" aria-pressed="true" style="pointer-events:none">'+esc(t)+'</span>';}).join('');
@@ -1489,11 +1514,37 @@ textarea{resize:vertical;line-height:1.5}
     return (LANG==='en')?('Sorry, '+fname(f)+' is not in stock at the moment.')
                         :('申し訳ございません。「'+f.jp+'」は現在入荷しておりません。');
   }
+  /* 並び順：入荷中（写真あり）を上に、それぞれ「あいうえお順」
+     漢字の名前は、よく使う花の読みに置き換えてから並べる（例：芍薬→しゃくやく） */
+  var YOMI=[['百日草','ひゃくにちそう'],['千日紅','せんにちこう'],['矢車菊','やぐるまぎく'],['金魚草','きんぎょそう'],['胡蝶蘭','こちょうらん'],
+    ['向日葵','ひまわり'],['紫陽花','あじさい'],['菜の花','なのはな'],['薔薇','ばら'],['百合','ゆり'],['芍薬','しゃくやく'],['撫子','なでしこ'],
+    ['水仙','すいせん'],['秋桜','こすもす'],['竜胆','りんどう'],['鈴蘭','すずらん'],['霞草','かすみそう'],['鶏頭','けいとう'],['葉物','はもの'],
+    ['桜','さくら'],['梅','うめ'],['椿','つばき'],['菊','きく'],['蘭','らん'],['草','そう'],['花','はな'],['葉','は'],['実','み'],['枝','えだ']];
+  function yomi(jp){
+    var t=String(jp||'');
+    YOMI.forEach(function(y){t=t.split(y[0]).join(y[1]);});
+    // カタカナ → ひらがな（「バラ」と「ばら」を同じ読みで並べる）
+    return t.replace(/[\u30A1-\u30F6]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0x60);});
+  }
+  var jaCollator=(window.Intl&&Intl.Collator)?new Intl.Collator('ja'):null;
+  function cmpYomi(a,b){var x=yomi(a.jp),y=yomi(b.jp);return jaCollator?jaCollator.compare(x,y):(x<y?-1:x>y?1:0);}
+  function sortedFlowers(){
+    var inS=flowers.filter(function(f){return !!f.photo;}).sort(cmpYomi);
+    var outS=flowers.filter(function(f){return !f.photo;}).sort(cmpYomi);
+    return {inStock:inS,out:outS};
+  }
   function renderBoard(){
     var g=$('fb-grid');g.innerHTML='';
     // 入荷なしになった花は選択から外す
     picked=picked.filter(function(id){var f=fById(id);return f&&f.photo;});
-    flowers.forEach(function(f){
+    var so=sortedFlowers();
+    so.inStock.concat(so.out).forEach(function(f,idx){
+      // 入荷なしの花の前に区切りの見出しを入れる
+      if(idx===so.inStock.length&&so.out.length){
+        var sep=document.createElement('div');sep.className='fb-sep';
+        sep.textContent=(LANG==='en')?'Not in stock at the moment':'現在入荷なし';
+        g.appendChild(sep);
+      }
       var inStock=!!f.photo;
       var c=document.createElement('div');c.className='fcard'+(inStock?'':' out');
       c.setAttribute('aria-pressed',picked.indexOf(f.id)>=0?'true':'false');
@@ -1547,6 +1598,7 @@ textarea{resize:vertical;line-height:1.5}
       g.appendChild(c);
     });
     ensureColors();
+    if(typeof renderOverview==='function'&&$('fb-ov'))renderOverview();
   }
   // 花材の削除（編集画面の「この花を削除」から）
   function deleteFlower(f,done){
@@ -1611,6 +1663,81 @@ textarea{resize:vertical;line-height:1.5}
     if(flowers.some(function(x){return x.jp===n;})){toast((LANG==='en')?(n+' is already on the board.'):('「'+n+'」はすでにあります。'));return;}
     flowers.push(normFlower({id:'f'+Date.now().toString(36),jp:n,en:jpToEn(n),photo:'',localPrice:pr}));
     $('fb-new').value='';$('fb-price').value='';persistFlowers();renderBoard();toast((LANG==='en')?(n+' added.'):(n+' を追加しました。'));
+  });
+  /* ===== 全体写真（入荷中の花をまとめて撮った写真） =====
+     全体写真があるときは、最初は全体写真だけを見せ、タップすると1本ずつの写真（一覧）を開く。
+     共有モードのスマホで入れると全員に表示（content.json の overview）、それ以外はこの端末だけ。 */
+  var OVKEY='hanataba_overview';
+  var ovLocal='',ovShared='',fbOpen=false;
+  try{ovLocal=localStorage.getItem(OVKEY)||'';}catch(e){}
+  function ovSrc(){
+    var sh=ovShared?(previewPhotos['ov:'+ovShared]||photoUrl(ovShared)):'';
+    return staffMode()?sh:(ovLocal||sh);
+  }
+  function renderOverview(){
+    var src=ovSrc(),en=(LANG==='en'),n=flowers.filter(function(f){return !!f.photo;}).length;
+    $('fb-ov').hidden=!src;
+    $('ov-add').hidden=!!src;
+    $('ov-add').textContent=en?'Overview photo':'全体写真';
+    if(src){
+      if($('ov-img').getAttribute('src')!==src)$('ov-img').src=src;
+      $('ov-cap').textContent=fbOpen?(en?'▲ Tap to close the list':'▲ タップで一覧を閉じる')
+        :(en?('👆 Tap to see each flower ('+n+')'):('👆 タップで1本ずつ見る（入荷中 '+n+'種類）'));
+      $('ov-change').textContent=en?'Change':'全体写真を変更';
+      $('ov-remove').textContent=en?'Remove':'外す';
+      $('ov-remove').hidden=staffMode()?!ovShared:!ovLocal;
+    }
+    // 全体写真がなければ一覧は常に表示。あれば、開いたときだけ表示
+    var open=!src||fbOpen;
+    $('fb-list').hidden=!open;
+    $('fb-toggle').hidden=!src;
+    $('fb-toggle').textContent=open?(en?'▲ Close the list':'▲ 一覧を閉じる'):(en?'▼ See each flower':'▼ 1本ずつの写真を見る');
+  }
+  function setFbOpen(v){
+    fbOpen=v;renderOverview();
+    if(v)setTimeout(function(){$('fb-list').scrollIntoView({behavior:'smooth',block:'start'});},50);
+  }
+  $('ov-pick').addEventListener('click',function(){setFbOpen(!fbOpen);});
+  $('fb-toggle').addEventListener('click',function(){setFbOpen(!fbOpen);});
+  $('ov-add').addEventListener('click',function(){$('ov-file').click();});
+  $('ov-change').addEventListener('click',function(){$('ov-file').click();});
+  $('ov-file').addEventListener('change',function(){
+    var file=this.files&&this.files[0];this.value='';
+    if(!file)return;
+    resizeSmall(file,1400,0.85).then(function(src){
+      if(!src){toast('写真を読み込めませんでした。');return;}
+      if(staffMode()){
+        ghRun('全体写真を共有中',async function(){
+          var old=ovShared;
+          var path='images/overview/overview-'+Date.now()+'.jpg';
+          await ghPutImage(path,src,'全体写真');
+          var data=await ghEditContent(function(d){d.overview=path;},'全体写真を変更');
+          previewPhotos['ov:'+path]=src;
+          if(old&&old!==path)await ghDeleteFile(old,'古い全体写真を削除');
+          applyShared(data);
+        }).then(function(ok){if(ok)toast('全体写真を入れました（全員に反映）。');});
+        return;
+      }
+      ovLocal=src;
+      try{localStorage.setItem(OVKEY,src);}catch(e){toast('保存容量がいっぱいです。');}
+      fbOpen=false;renderOverview();
+      toast((LANG==='en')?'Overview photo set.':'全体写真を入れました。');
+    });
+  });
+  $('ov-remove').addEventListener('click',function(){
+    if(staffMode()){
+      if(!confirm('全体写真を全員の画面から外しますか？'))return;
+      ghRun('全体写真を外しています',async function(){
+        var old=ovShared;
+        var data=await ghEditContent(function(d){delete d.overview;},'全体写真を外す');
+        if(old)await ghDeleteFile(old,'全体写真を削除');
+        applyShared(data);
+      }).then(function(ok){if(ok)toast('全体写真を外しました（全員に反映）。');});
+      return;
+    }
+    if(!confirm((LANG==='en')?'Remove the overview photo?':'全体写真を外しますか？'))return;
+    ovLocal='';try{localStorage.removeItem(OVKEY);}catch(e){}
+    renderOverview();
   });
   // 花材ボードは画面上部に常に表示
   $('budget').addEventListener('input',renderBudget);
@@ -1854,6 +1981,7 @@ textarea{resize:vertical;line-height:1.5}
       flowers=shared.concat(localOnly.filter(function(f){return !names[f.jp];}));
       persistFlowers();
     }
+    ovShared=(typeof d.overview==='string')?d.overview:((d.overview&&d.overview.photo)||'');
     if(Array.isArray(d.gallery)){
       sharedLibrary=d.gallery.map(function(it,i){
         var path=it.photo||it.src||'';
@@ -1951,7 +2079,6 @@ textarea{resize:vertical;line-height:1.5}
     return Promise.resolve(legacyCopy());
   }
   /* 選んだ花の写真を1枚の「見本画像」にまとめる（ChatGPTに添付して、写真の花に近づける） */
-  var gptRef=null, gptSeq=0;
   function corsSrc(u){
     // GitHubの写真は、キャッシュの都合で読み込みに失敗しないよう住所を少し変えて読み直す
     //（生成画像の住所は変えない＝変えると別の画像が作られてしまう）
@@ -1985,60 +2112,109 @@ textarea{resize:vertical;line-height:1.5}
     return await new Promise(function(res,rej){cv.toBlob(function(b){b?res(b):rej(new Error('blob'));},'image/jpeg',0.9);});
   }
   function canShareFile(file){try{return !!(navigator.canShare&&navigator.share&&navigator.canShare({files:[file]}));}catch(e){return false;}}
-  function gptSteps(){
-    var en=(LANG==='en'),share=!!(gptRef&&gptRef.share),st;
-    var last=en?'Save the image, then import it via Gallery → “Add your own photos” and tick “AI-generated image”'
-               :'できた画像を保存し、「ギャラリー」→「手持ちの写真を追加」で取り込み、「AIで作った画像」にチェック';
-    if(!gptRef){
-      st=en?['Press “Open ChatGPT” (it opens with the instructions filled in)','If the box is empty, paste (⌘V) and send',last]
-           :['「ChatGPTを開く」を押す（指示文が入った状態で開きます）','入っていなければ、入力欄に貼り付けて（⌘V）送信',last];
-    }else if(share){
-      st=en?['Press “Send to ChatGPT” and choose “ChatGPT” from the list (the reference image is attached; the instructions are copied too)',
-             'If the instructions are not in the message box, long-press it, paste, and send',
-             'If ChatGPT is not in the list: “Save reference image” → “Open ChatGPT” → attach it with “＋” and paste the instructions',last]
-           :['「ChatGPTに送る」を押し、出てきた一覧から「ChatGPT」を選ぶ（見本画像が添付されます。指示文もコピー済みです）',
-             '入力欄に指示文が入っていなければ、長押しして「ペースト」し、送信',
-             '一覧にChatGPTが出ないとき：「見本画像を保存」→「ChatGPTを開く」→「＋」から見本画像を添付し、指示文を貼り付けて送信',last];
-    }else{
-      st=en?['Press “Save reference image”','Press “Open ChatGPT” (the instructions are copied)','In ChatGPT, attach the saved image with “＋” (or drag it in), paste the instructions (⌘V) and send',last]
-           :['「見本画像を保存」を押す','「ChatGPTを開く」を押す（指示文はコピーされます）','ChatGPTの入力欄の「＋」から保存した見本画像を添付し（ドラッグでもOK）、指示文を貼り付けて（⌘V）送信',last];
-    }
-    $('gpt-steps').innerHTML=st.map(function(x){return '<li>'+esc(x)+'</li>';}).join('');
+  /* 見本画像は花を選んだ時点で先に作っておく（ボタンを押したらすぐ送れるように） */
+  var refCache=null,refBuilding=null,refTimer=null;
+  function refList(){return picked.map(fById).filter(function(f){return f&&f.photo;});}
+  function refKey(){
+    var l=refList();if(!l.length)return '';
+    return LANG+'|'+l.map(function(f){return f.id+':'+f.photo.length+':'+f.photo.slice(-32)+':'+descJa(f);}).join('|');
   }
-  function setGptRef(r){
-    if(gptRef&&gptRef.url)URL.revokeObjectURL(gptRef.url);
-    gptRef=r;
+  function buildRef(){
+    var key=refKey();
+    if(!key)return Promise.resolve(null);
+    if(refCache&&refCache.key===key)return Promise.resolve(refCache);
+    if(refBuilding&&refBuilding.key===key)return refBuilding.p;
+    var p=makeRefSheet(refList()).then(function(blob){
+      if(refCache&&refCache.url)URL.revokeObjectURL(refCache.url);
+      refCache={key:key,blob:blob,file:new File([blob],'flowers-reference.jpg',{type:'image/jpeg'}),url:URL.createObjectURL(blob)};
+      refBuilding=null;updateGptGuide();
+      return refCache;
+    },function(e){refBuilding=null;throw e;});
+    refBuilding={key:key,p:p};
+    return p;
+  }
+  function scheduleRef(){clearTimeout(refTimer);refTimer=setTimeout(function(){buildRef().catch(function(){});},300);updateGptGuide();}
+  function readyRef(){var k=refKey();return (k&&refCache&&refCache.key===k)?refCache:null;}
+  // スマホ（タッチ操作＋共有ボタンが使える）なら「共有」で ChatGPT アプリへ送る
+  function useShare(){
+    var touch=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+    var r=readyRef();
+    return touch&&(r?canShareFile(r.file):!!(navigator.canShare&&navigator.share));
+  }
+  function gptHowTo(){
     var en=(LANG==='en');
+    if(!refKey())return en?'Press the button and ChatGPT opens with the instructions already in place.'
+      :'押すとChatGPTが開き、指示文が入った状態で始まります（始まらなければ送信を押してください）。';
+    if(useShare())return en?'Press the button, choose “ChatGPT” in the share menu and send. The photos of your flowers go with it.'
+      :'押すと共有の画面が出ます。「ChatGPT」を選んで送信するだけです（選んだ花の写真も一緒に送ります）。';
+    return en?'Press the button: the reference image is saved and ChatGPT opens. Drag the image into the message box, paste the instructions (⌘V) and send.'
+      :'押すと見本画像が保存され、ChatGPTが開きます。画像を入力欄にドラッグし、⌘Vで指示文を貼り付けて送信してください。';
+  }
+  function updateGptGuide(){
+    $('gpt-guide').textContent=gptHowTo();
+    $('gpt-check').hidden=!refKey();
+    $('gpt-check').textContent=(LANG==='en')?'Check the reference image and instructions':'見本画像・指示文を確認する';
+  }
+  // ChatGPT へ送る（ボタン1つ）
+  function sendToGpt(){
+    var en=(LANG==='en');
+    if(!refKey()){
+      var t0=buildGptPrompt(false);
+      copyPrompt(t0);
+      window.open('https://chatgpt.com/?q='+encodeURIComponent(t0),'_blank');
+      return true;
+    }
+    var r=readyRef();
+    if(!r)return false; // 見本画像がまだ → 確認画面で
+    var txt=buildGptPrompt(true);
+    if(useShare()){
+      copyPrompt(txt);
+      navigator.share({files:[r.file],text:txt}).then(function(){
+        toast(en?'If the instructions are not in ChatGPT’s message box, long-press it and paste.':'ChatGPTの入力欄に文章が入っていなければ、長押しして「ペースト」してから送信してください。',6000);
+      }).catch(function(e){
+        if(e&&e.name==='AbortError')return;
+        openGpt();
+        toast(en?'Could not open the share menu. Please use the buttons on this screen.':'共有の画面を開けませんでした。この画面のボタンから操作してください。',5000);
+      });
+      return true;
+    }
+    copyPrompt(txt);
+    download(r.url,'flowers-reference-'+Date.now()+'.jpg');
+    window.open('https://chatgpt.com/','_blank');
+    toast(en?'Reference image saved and instructions copied. In ChatGPT: drag the image in, paste (⌘V) and send.'
+      :'見本画像を保存し、指示文をコピーしました。ChatGPTで画像をドラッグし、⌘Vで貼り付けて送信してください。',8000);
+    return true;
+  }
+  // 確認画面（見本画像・指示文を見る／うまく送れないときの手動操作）
+  function fillGptModal(){
+    var en=(LANG==='en'),r=readyRef(),has=!!refKey();
     $('gpt-ref').hidden=!r;
     if(r){
       $('gpt-ref-img').src=r.url;
       $('gpt-ref-lbl').textContent=en?'Reference image (photos of the flowers you chose)':'見本画像（選んだ花の写真）';
-      $('gpt-ref-note').textContent=en?'Attach this image in ChatGPT so the flowers come out closer to the real ones in colour and shape.'
-        :'この画像をChatGPTに添付すると、写真の花に近い色・形で作られます。';
-      $('gpt-share').hidden=!r.share;
-      $('gpt-share').textContent=en?'Send to ChatGPT':'ChatGPTに送る';
-      $('gpt-save').textContent=en?'Save reference image':'見本画像を保存';
+      $('gpt-ref-note').textContent=en?'This image is sent to ChatGPT so the flowers come out closer to the real ones.':'この画像をChatGPTに見せることで、写真の花に近い色・形で作られます。';
     }
-    $('gpt-prompt').value=buildGptPrompt(!!r);
-    gptSteps();
+    $('gpt-prompt').value=buildGptPrompt(has);
+    $('gpt-steps').textContent=has&&!r?(en?'Making the reference image…':'見本画像を作っています…'):gptHowTo();
+    $('gpt-sum').textContent=en?'Show the instructions':'指示文を見る';
+    $('gpt-go').textContent=has&&useShare()?(en?'Send to ChatGPT':'ChatGPTに送る'):(en?'Create in ChatGPT':'ChatGPTで作る');
+    $('gpt-go').disabled=has&&!r;
+    $('gpt-save').hidden=!r;
+    $('gpt-save').textContent=en?'Save reference image':'見本画像を保存';
   }
   function openGpt(){
-    var seq=++gptSeq;
-    setGptRef(null);
+    fillGptModal();
     $('gpt-modal').hidden=false;$('gpt-modal').classList.add('open');
-    var list=picked.map(fById).filter(function(f){return f&&f.photo;});
-    if(!list.length)return;
-    makeRefSheet(list).then(function(blob){
-      if(seq!==gptSeq)return;
-      var file=new File([blob],'flowers-reference.jpg',{type:'image/jpeg'});
-      setGptRef({blob:blob,file:file,url:URL.createObjectURL(blob),share:canShareFile(file)});
-    }).catch(function(){
-      if(seq!==gptSeq)return;
-      toast((LANG==='en')?'Could not make the reference image. Only the instructions will be used.':'見本画像を作れませんでした。指示文だけで作ります。');
-    });
+    if(refKey()&&!readyRef()){
+      buildRef().then(function(){if(!$('gpt-modal').hidden)fillGptModal();}).catch(function(){
+        toast((LANG==='en')?'Could not make the reference image. Only the instructions will be used.':'見本画像を作れませんでした。指示文だけで作ります。');
+      });
+    }
   }
   function closeGpt(){$('gpt-modal').classList.remove('open');$('gpt-modal').hidden=true;}
-  $('to-chatgpt').addEventListener('click',openGpt);
+  // メインのボタン：見本画像ができていればそのまま送る（まだなら確認画面を開く）
+  $('to-chatgpt').addEventListener('click',function(){if(!sendToGpt())openGpt();});
+  $('gpt-check').addEventListener('click',openGpt);
   $('gpt-close').addEventListener('click',closeGpt);
   $('gpt-cancel').addEventListener('click',closeGpt);
   $('gpt-modal').addEventListener('click',function(e){if(e.target===$('gpt-modal'))closeGpt();});
@@ -2047,27 +2223,12 @@ textarea{resize:vertical;line-height:1.5}
       toast(ok?L('指示文をコピーしました。','gpt.copied'):L('コピーできませんでした。指示文を選択してコピーしてください。','gpt.copyfail'));
     });
   });
-  $('gpt-share').addEventListener('click',function(){
-    if(!gptRef)return;
-    var txt=$('gpt-prompt').value;
-    copyPrompt(txt);
-    navigator.share({files:[gptRef.file],text:txt}).catch(function(e){
-      if(e&&e.name==='AbortError')return;
-      toast((LANG==='en')?'Could not send. Save the reference image and attach it in ChatGPT.':'送れませんでした。「見本画像を保存」してから、ChatGPTで添付してください。');
-    });
-  });
   $('gpt-save').addEventListener('click',function(){
-    if(!gptRef)return;
-    download(gptRef.url,'flowers-reference-'+Date.now()+'.jpg');
+    var r=readyRef();if(!r)return;
+    download(r.url,'flowers-reference-'+Date.now()+'.jpg');
     toast((LANG==='en')?'Reference image saved.':'見本画像を保存しました。');
   });
-  $('gpt-open').addEventListener('click',function(){
-    var txt=$('gpt-prompt').value;
-    // 見本画像を添付してから送れるよう、そのときは指示文を入れずに開く（指示文はコピー済み）
-    window.open(gptRef?'https://chatgpt.com/':('https://chatgpt.com/?q='+encodeURIComponent(txt)),'_blank');
-    copyPrompt(txt);
-    toast(L('ChatGPTを開きました（指示文はコピー済みです）。','gpt.opened'));
-  });
+  $('gpt-go').addEventListener('click',function(){if(sendToGpt())closeGpt();});
 
   /* ===== スタッフ設定の画面 ===== */
   function updateStaffUI(){
