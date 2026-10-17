@@ -28,6 +28,10 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:var(--pap
 img{max-width:100%}
 
 .masthead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.brand-row{display:flex;align-items:center;gap:14px 18px;flex-wrap:wrap}
+/* ロゴは白い背景の画像なので、白を背景になじませる（ダークモードでは白黒を反転して白い文字に） */
+.brand-logo{display:block;height:clamp(52px,8vw,72px);width:auto;mix-blend-mode:multiply}
+@media (prefers-color-scheme:dark){.brand-logo{filter:invert(1);mix-blend-mode:screen}}
 .brand h1{font-family:var(--font-display);font-weight:600;font-size:clamp(23px,4vw,32px);letter-spacing:.04em;margin:0}
 .brand .en{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--sage-deep);font-weight:600;display:block;margin-top:4px}
 .brand p{margin:8px 0 0;color:var(--ink-soft);font-size:13px;max-width:58ch}
@@ -219,7 +223,11 @@ textarea{resize:vertical;line-height:1.5}
 <div class="wrap">
   <header class="masthead">
     <div class="brand">
-      <h1 data-i18n="brand.title">季節の花束スタジオ</h1>
+      <!-- お店のロゴ（Atelier Flower Plus）＋アプリ名 -->
+      <div class="brand-row">
+        <img class="brand-logo" src="images/logo.png" alt="Atelier Flower Plus" onerror="this.hidden=true">
+        <h1 data-i18n="brand.title">季節の花束スタジオ</h1>
+      </div>
       <span class="en">Seasonal Bouquet Studio</span>
       <p data-i18n="brand.desc">AIで季節の花束や結婚式の装飾（高砂・雛壇まわり）の写真を生成し、商品名・価格入りのお客さま提示カードを作成。手持ちの写真も一緒にギャラリーで管理できます。登録・キー・料金は不要です。</p>
       <div class="gencount"><span data-i18n="gc.pre">これまでの生成回数：</span><strong id="gen-count-view">0</strong><span data-i18n="gc.post"> 回</span></div>
