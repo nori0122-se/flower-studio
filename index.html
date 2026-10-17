@@ -958,7 +958,7 @@ textarea{resize:vertical;line-height:1.5}
   }
   // ai=true のときは「AIによる生成イメージ」の断りを入れる
   async function makeCard(src,title,price,eyebrow,ai){
-    var W=1080,IMG=1080,BAND=380,H=IMG+BAND;
+    var W=1080,IMG=1080,BAND=480,H=IMG+BAND;
     var cv=document.createElement('canvas');cv.width=W;cv.height=H;var ctx=cv.getContext('2d');
     ctx.fillStyle='#FBF6EC';ctx.fillRect(0,0,W,H);
     var img=await loadImg(corsSrc(src));
@@ -972,9 +972,24 @@ textarea{resize:vertical;line-height:1.5}
     ctx.font='600 64px '+serifFont();
     ctx.fillText(title||'季節のブーケ',W/2,IMG+188);
     if(price){ctx.fillStyle='#54634A';ctx.font='600 52px '+serifFont();ctx.fillText(price,W/2,IMG+272);}
+    // お店のロゴ（白い背景は「乗算」で帯の色になじませる）
+    var logo=await loadLogo();
+    if(logo){
+      var lh=86,lw=Math.round(logo.width*lh/logo.height);
+      ctx.save();ctx.globalCompositeOperation='multiply';
+      ctx.drawImage(logo,(W-lw)/2,IMG+310,lw,lh);
+      ctx.restore();
+    }
     ctx.fillStyle='#9C9682';ctx.font='400 24px '+cssFont();
-    ctx.fillText(ai?((LANG==='en')?'* AI-generated image. The actual flowers may differ slightly in colour and shape.':'※AIによる生成イメージです。実際のお花とは色・形などが若干異なります。'):((LANG==='en')?'* For reference only':'※イメージ写真です'),W/2,IMG+338);
+    ctx.fillText(ai?((LANG==='en')?'* AI-generated image. The actual flowers may differ slightly in colour and shape.':'※AIによる生成イメージです。実際のお花とは色・形などが若干異なります。'):((LANG==='en')?'* For reference only':'※イメージ写真です'),W/2,IMG+444);
     return cv;
+  }
+  // ロゴ画像（読めなければロゴなしでカードを作る。手元のファイルを直接開いたときは使わない＝画像を書き出せなくなるため）
+  var logoP=null;
+  function loadLogo(){
+    if(location.protocol==='file:')return Promise.resolve(null);
+    if(!logoP)logoP=loadImg('images/logo.png').catch(function(){logoP=null;return null;});
+    return logoP;
   }
   function serifFont(){return '"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif';}
   function cssFont(){return '"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif';}
@@ -2173,11 +2188,11 @@ textarea{resize:vertical;line-height:1.5}
     var r=readyRef();
     return touch&&(r?canShareFile(r.file):!!(navigator.canShare&&navigator.share));
   }
-  var AI={chatgpt:{name:'ChatGPT',url:'https://chatgpt.com/',q:true},gemini:{name:'Gemini',url:'https://gemini.google.com/app',q:false}};
+  var AI={chatgpt:{name:'ChatGPT',url:'https://chatgpt.com/',q:true},gemini:{name:'Gemini',url:'https://gemini.google.com/app',q:true}};
   function gptHowTo(){
     var en=(LANG==='en');
-    if(!refKey())return en?'ChatGPT opens with the instructions filled in. For Gemini, the instructions are copied — paste them (long-press → Paste, or ⌘V) and send.'
-      :'ChatGPTは指示文が入った状態で開きます。Geminiは指示文をコピーして開くので、入力欄に貼り付けて（長押し→ペースト、または⌘V）送信してください。';
+    if(!refKey())return en?'ChatGPT / Gemini opens with the instructions filled in. If the box is empty, paste them (long-press → Paste, or ⌘V) and send.'
+      :'押すとChatGPT／Geminiが指示文が入った状態で開きます。入っていなければ、入力欄に貼り付けて（長押し→ペースト、または⌘V）送信してください。';
     if(useShare())return en?'Press a button, choose “ChatGPT” or “Gemini” in the share menu and send. The photos of your flowers go with it.'
       :'押すと共有の画面が出ます。「ChatGPT」または「Gemini」を選んで送信するだけです（選んだ花の写真も一緒に送ります）。';
     return en?'Press a button: the reference image is saved and ChatGPT / Gemini opens. Drag the image into the message box, paste the instructions (⌘V) and send.'
@@ -2194,9 +2209,9 @@ textarea{resize:vertical;line-height:1.5}
     if(!refKey()){
       var t0=buildGptPrompt(false);
       copyPrompt(t0);
-      // ChatGPTは指示文を入れて開ける。Geminiはできないので、コピーした指示文を貼ってもらう
+      // 指示文を入れた状態で開く（入らなかったときのために指示文もコピーしておく）
       window.open(ai.q?(ai.url+'?q='+encodeURIComponent(t0)):ai.url,'_blank');
-      if(!ai.q)toast(en?('Instructions copied. Paste them into '+ai.name+' and send.'):('指示文をコピーしました。'+ai.name+'の入力欄に貼り付けて送信してください。'),7000);
+      toast(en?('Opened '+ai.name+'. If the instructions are not in the box, paste them and send.'):(ai.name+'を開きました。入力欄に指示文が入っていなければ、貼り付けて送信してください（コピー済みです）。'),7000);
       return true;
     }
     var r=readyRef();
