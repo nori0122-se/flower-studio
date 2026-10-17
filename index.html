@@ -126,8 +126,15 @@ textarea{resize:vertical;line-height:1.5}
 .sheet-foot{display:flex;gap:9px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap;align-items:center}
 
 .gpt-steps{margin:0 0 12px;padding-left:20px;font-size:13px;color:var(--ink-soft);line-height:1.8}
-#gpt-prompt{min-height:240px;font-size:13px;line-height:1.65}
-#to-gemini{margin-top:-8px}
+#gpt-prompt{min-height:150px;font-size:13px;line-height:1.65;margin-bottom:14px}
+.gflow{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.gflow li{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper);display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.gflow li.done{border-color:var(--sage)}
+.gflow li.off{opacity:.55}
+.gflow-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink);width:100%}
+.gflow-n{font-size:17px;color:var(--sage-deep)}
+.gflow-ok{margin-left:auto;font-size:12px;color:var(--sage-deep)}
+.gflow-acts{display:flex;gap:8px;flex-wrap:wrap}.gflow-acts .btn{min-width:120px}
 #gpt-guide{margin-top:-6px;line-height:1.7}
 .linkbtn{align-self:flex-start;margin-top:-10px;border:0;background:none;padding:0;font:inherit;font-size:12px;color:var(--sage-deep);text-decoration:underline;cursor:pointer}
 #gpt-modal details{margin-top:12px}#gpt-modal summary{cursor:pointer;font-size:13px;color:var(--ink-soft)}
@@ -335,10 +342,8 @@ textarea{resize:vertical;line-height:1.5}
           <div class="note" style="margin-top:6px" data-i18n="note.comment">要望に合わせてアレンジします（日本語のよくある言葉は自動で反映されます）。</div>
         </div>
 
-        <button type="button" class="btn primary" id="to-chatgpt" data-i18n="btn.chatgpt">✨ ChatGPTで高画質に作る</button>
-        <button type="button" class="btn primary" id="to-gemini" data-i18n="btn.gemini">✨ Geminiで高画質に作る</button>
-        <div class="note" id="gpt-guide"></div>
-        <button type="button" class="linkbtn" id="gpt-check">見本画像・指示文を確認する</button>
+        <button type="button" class="btn primary" id="to-image" data-i18n="btn.toimage">✨ イメージ画像を作る</button>
+        <div class="note" id="gpt-guide" data-i18n="note.toimage">押すと、見本画像と指示文の確認画面が開きます。①見本画像の保存 → ②指示文のコピー → ③ChatGPT か Gemini で作ります。</div>
         <!-- 以前のアプリ内の画像生成（Cloudflare）。Geminiに置き換えたため使わない -->
         <button class="btn ghost" id="gen" hidden>写真を生成する</button>
       </div>
@@ -346,7 +351,7 @@ textarea{resize:vertical;line-height:1.5}
       <div class="stage-wrap">
         <div class="stage" id="stage">
           <div class="placeholder"><span class="em">🌷</span><span data-i18n="stage.hint">ChatGPT・Geminiで作った画像を保存して<br>ここに取り込むと、お客さまカードや注文フォームに使えます</span>
-            <label class="btn ghost sm" for="import-ai" style="margin-top:12px" data-i18n="btn.importai">📥 作った画像を取り込む</label></div>
+            <div style="margin-top:14px"><label class="btn ghost sm" for="import-ai" data-i18n="btn.importai">📥 作った画像を取り込む</label></div></div>
         </div>
         <div id="after" hidden>
           <div class="ai-notice" data-i18n="ai.notice">※ この画像はAIによる生成イメージです。実際にお作りする花束とは、花の色・形・本数などが若干異なります。あらかじめご了承ください。</div>
@@ -426,7 +431,7 @@ textarea{resize:vertical;line-height:1.5}
 <div class="modal" id="gpt-modal" hidden>
   <div class="sheet">
     <div class="sheet-head">
-      <h2 data-i18n="gpt.title">ChatGPT・Geminiで作る</h2>
+      <h2 data-i18n="gpt.title">イメージ画像を作る</h2>
       <button class="x" id="gpt-close" aria-label="閉じる">×</button>
     </div>
     <div class="sheet-body">
@@ -435,16 +440,22 @@ textarea{resize:vertical;line-height:1.5}
         <img id="gpt-ref-img" alt="選んだ花の見本画像">
         <div class="note" id="gpt-ref-note"></div>
       </div>
-      <p class="note" id="gpt-steps" style="margin:0;font-size:13px;line-height:1.7"></p>
-      <details><summary id="gpt-sum">指示文を見る</summary><textarea id="gpt-prompt" rows="12" readonly></textarea></details>
+      <div class="label" id="gpt-prompt-lbl">指示文</div>
+      <textarea id="gpt-prompt" rows="8" readonly></textarea>
+      <ol class="gflow">
+        <li id="st1"><div class="gflow-h"><span class="gflow-n">①</span><span id="st1-t">見本画像の保存</span><span class="gflow-ok" id="st1-ok" hidden>✓ 完了</span></div>
+          <button type="button" class="btn ghost sm" id="gpt-save">見本画像を保存</button>
+          <div class="note" id="st1-note"></div></li>
+        <li id="st2"><div class="gflow-h"><span class="gflow-n">②</span><span id="st2-t">指示文のコピー</span><span class="gflow-ok" id="st2-ok" hidden>✓ 完了</span></div>
+          <button type="button" class="btn ghost sm" id="gpt-copy">指示文をコピー</button></li>
+        <li id="st3"><div class="gflow-h"><span class="gflow-n">③</span><span id="st3-t">ChatGPT か Gemini で作る</span></div>
+          <div class="gflow-acts"><button type="button" class="btn primary sm" id="gpt-go">ChatGPT</button><button type="button" class="btn primary sm" id="gpt-go-gem">Gemini</button></div>
+          <div class="note" id="st3-note"></div></li>
+      </ol>
       <div class="ai-notice" style="margin:12px 0 0" data-i18n="gpt.notice">※ ChatGPT・Geminiで作る画像もAIによる生成イメージです。写真を見本にしても、実際の花とは色・形・本数などが若干異なります。</div>
     </div>
     <div class="sheet-foot">
       <button type="button" class="btn ghost sm" id="gpt-cancel" data-i18n="btn.close">閉じる</button>
-      <button type="button" class="btn ghost sm" id="gpt-copy" data-i18n="gpt.copy">指示文をコピー</button>
-      <button type="button" class="btn ghost sm" id="gpt-save" hidden>見本画像を保存</button>
-      <button type="button" class="btn primary sm" id="gpt-go">ChatGPTで作る</button>
-      <button type="button" class="btn primary sm" id="gpt-go-gem">Geminiで作る</button>
     </div>
   </div>
 </div>
@@ -595,9 +606,9 @@ textarea{resize:vertical;line-height:1.5}
       'ts.card.fail':'Could not create the card.','ts.fb.added':'Added.','ts.fb.name':'Please enter a flower name.',
       'ts.ai.made':'Sample photo created.','ts.ai.fail':'Could not create the sample photo. Please try again later.',
       'ts.full':'Storage is full. Please reduce the number of photos.',
-      'btn.chatgpt':'✨ Create high-quality image in ChatGPT','btn.gemini':'✨ Create high-quality image in Gemini',
+      'btn.toimage':'✨ Create an image','note.toimage':'Opens a screen to check the reference image and instructions: ① save the reference image → ② copy the instructions → ③ create it in ChatGPT or Gemini.',
       'note.chatgpt':'ChatGPT can create photo-quality images like a real florist’s work (this app writes the instructions for you).',
-      'gpt.title':'Create in ChatGPT / Gemini',
+      'gpt.title':'Create an image',
       'gpt.copy':'Copy instructions','gpt.open':'Open ChatGPT',
       'gpt.copied':'Instructions copied.','gpt.copyfail':'Could not copy. Please select the text and copy it.',
       'gpt.opened':'ChatGPT opened (instructions copied too).'
@@ -2174,87 +2185,68 @@ textarea{resize:vertical;line-height:1.5}
     var p=makeRefSheet(refList()).then(function(blob){
       if(refCache&&refCache.url)URL.revokeObjectURL(refCache.url);
       refCache={key:key,blob:blob,file:new File([blob],'flowers-reference.jpg',{type:'image/jpeg'}),url:URL.createObjectURL(blob)};
-      refBuilding=null;updateGptGuide();
+      refBuilding=null;
+      // 確認画面を開いている間に見本画像ができたら表示を更新
+      if(!$('gpt-modal').hidden)fillGptModal();
       return refCache;
     },function(e){refBuilding=null;throw e;});
     refBuilding={key:key,p:p};
     return p;
   }
-  function scheduleRef(){clearTimeout(refTimer);refTimer=setTimeout(function(){buildRef().catch(function(){});},300);updateGptGuide();}
+  function scheduleRef(){clearTimeout(refTimer);refTimer=setTimeout(function(){buildRef().catch(function(){});},300);}
   function readyRef(){var k=refKey();return (k&&refCache&&refCache.key===k)?refCache:null;}
-  // スマホ（タッチ操作＋共有ボタンが使える）なら「共有」で ChatGPT アプリへ送る
-  function useShare(){
-    var touch=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
-    var r=readyRef();
-    return touch&&(r?canShareFile(r.file):!!(navigator.canShare&&navigator.share));
-  }
   var AI={chatgpt:{name:'ChatGPT',url:'https://chatgpt.com/',q:true},gemini:{name:'Gemini',url:'https://gemini.google.com/app',q:true}};
-  function gptHowTo(){
-    var en=(LANG==='en');
-    if(!refKey())return en?'ChatGPT / Gemini opens with the instructions filled in. If the box is empty, paste them (long-press → Paste, or ⌘V) and send.'
-      :'押すとChatGPT／Geminiが指示文が入った状態で開きます。入っていなければ、入力欄に貼り付けて（長押し→ペースト、または⌘V）送信してください。';
-    if(useShare())return en?'Press a button, choose “ChatGPT” or “Gemini” in the share menu and send. The photos of your flowers go with it.'
-      :'押すと共有の画面が出ます。「ChatGPT」または「Gemini」を選んで送信するだけです（選んだ花の写真も一緒に送ります）。';
-    return en?'Press a button: the reference image is saved and ChatGPT / Gemini opens. Drag the image into the message box, paste the instructions (⌘V) and send.'
-      :'押すと見本画像が保存され、ChatGPT／Geminiが開きます。画像を入力欄にドラッグし、⌘Vで指示文を貼り付けて送信してください。';
+  // 確認画面の①②の進み具合（③は①②が終わったら押せる）
+  var gStep={saved:false,copied:false};
+  function phoneLike(){return !!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);}
+  function renderGflow(){
+    var en=(LANG==='en'),r=readyRef(),has=!!refKey();
+    var need1=has; // 花を選んでいないときは見本画像なし → ①は不要
+    var ok1=!need1||gStep.saved, ok2=gStep.copied, ready=ok1&&ok2;
+    $('st1').hidden=!need1;
+    $('st1-t').textContent=en?'Save the reference image':'見本画像の保存';
+    $('gpt-save').textContent=en?'Save reference image':'見本画像を保存';
+    $('gpt-save').disabled=!r;
+    $('st1-note').textContent=!r?(en?'Making the reference image…':'見本画像を作っています…')
+      :(phoneLike()?(en?'Choose “Save Image” in the menu that opens.':'出てきた画面で「画像を保存」を選んでください（写真アプリに保存されます）。')
+                   :(en?'It is saved to your Downloads folder.':'「ダウンロード」フォルダに保存されます。'));
+    $('st1-ok').hidden=!gStep.saved;$('st1').classList.toggle('done',gStep.saved);
+    $('st2-t').textContent=en?'Copy the instructions':'指示文のコピー';
+    $('gpt-copy').textContent=en?'Copy instructions':'指示文をコピー';
+    $('st2-ok').hidden=!gStep.copied;$('st2').classList.toggle('done',gStep.copied);
+    // 番号（①がないときは ②→①、③→② にずらさず、そのまま②③で表示）
+    $('st3-t').textContent=en?'Create it in ChatGPT or Gemini':'ChatGPT か Gemini で作る';
+    $('gpt-go').disabled=!ready;$('gpt-go-gem').disabled=!ready;
+    $('st3').classList.toggle('off',!ready);
+    $('st3-note').textContent=!ready
+      ?(need1?(en?'Do ① and ② first.':'①と②が終わると押せるようになります。'):(en?'Do ② first.':'②が終わると押せるようになります。'))
+      :(need1?(en?'When it opens, attach the image from ① (“＋” button) and paste the instructions from ② (long-press → Paste, or ⌘V), then send.'
+                 :'開いたら、①の画像を「＋」から添付し、②の指示文を貼り付けて（長押し→ペースト、または⌘V）送信してください。')
+             :(en?'It opens with the instructions filled in. If not, paste them (long-press → Paste, or ⌘V) and send.'
+                 :'指示文が入った状態で開きます。入っていなければ、貼り付けて（長押し→ペースト、または⌘V）送信してください。'));
+    $('gpt-prompt-lbl').textContent=en?'Instructions':'指示文';
   }
-  function updateGptGuide(){
-    $('gpt-guide').textContent=gptHowTo();
-    $('gpt-check').hidden=!refKey();
-    $('gpt-check').textContent=(LANG==='en')?'Check the reference image and instructions':'見本画像・指示文を確認する';
+  // ③ ChatGPT・Gemini を開く
+  function openAi(target){
+    var ai=AI[target]||AI.chatgpt,txt=$('gpt-prompt').value;
+    // 見本画像があるときは、画像を添付してから送れるよう指示文を入れずに開く（ChatGPTは指示文を入れると自動で送信されるため）
+    window.open((ai.q&&!refKey())?(ai.url+'?q='+encodeURIComponent(txt)):ai.url,'_blank');
+    bumpGenCount();
   }
-  // ChatGPT・Gemini へ送る（ボタン1つ）
-  function sendToGpt(target){
-    var en=(LANG==='en'),ai=AI[target]||AI.chatgpt;
-    if(!refKey()){
-      var t0=buildGptPrompt(false);
-      copyPrompt(t0);
-      // 指示文を入れた状態で開く（入らなかったときのために指示文もコピーしておく）
-      window.open(ai.q?(ai.url+'?q='+encodeURIComponent(t0)):ai.url,'_blank');
-      toast(en?('Opened '+ai.name+'. If the instructions are not in the box, paste them and send.'):(ai.name+'を開きました。入力欄に指示文が入っていなければ、貼り付けて送信してください（コピー済みです）。'),7000);
-      return true;
-    }
-    var r=readyRef();
-    if(!r)return false; // 見本画像がまだ → 確認画面で
-    var txt=buildGptPrompt(true);
-    if(useShare()){
-      copyPrompt(txt);
-      navigator.share({files:[r.file],text:txt}).then(function(){
-        toast(en?('If the instructions are not in '+ai.name+'’s message box, long-press it and paste.'):(ai.name+'の入力欄に文章が入っていなければ、長押しして「ペースト」してから送信してください。'),6000);
-      }).catch(function(e){
-        if(e&&e.name==='AbortError')return;
-        openGpt();
-        toast(en?'Could not open the share menu. Please use the buttons on this screen.':'共有の画面を開けませんでした。この画面のボタンから操作してください。',5000);
-      });
-      return true;
-    }
-    copyPrompt(txt);
-    download(r.url,'flowers-reference-'+Date.now()+'.jpg');
-    window.open(ai.url,'_blank');
-    toast(en?('Reference image saved and instructions copied. In '+ai.name+': drag the image in, paste (⌘V) and send.')
-      :('見本画像を保存し、指示文をコピーしました。'+ai.name+'で画像をドラッグし、⌘Vで貼り付けて送信してください。'),8000);
-    return true;
-  }
-  // 確認画面（見本画像・指示文を見る／うまく送れないときの手動操作）
+  // 確認画面（見本画像・指示文 → ①②③）
   function fillGptModal(){
     var en=(LANG==='en'),r=readyRef(),has=!!refKey();
     $('gpt-ref').hidden=!r;
     if(r){
       $('gpt-ref-img').src=r.url;
       $('gpt-ref-lbl').textContent=en?'Reference image (photos of the flowers you chose)':'見本画像（選んだ花の写真）';
-      $('gpt-ref-note').textContent=en?'This image is sent to ChatGPT so the flowers come out closer to the real ones.':'この画像をChatGPTに見せることで、写真の花に近い色・形で作られます。';
+      $('gpt-ref-note').textContent=en?'Attach this image in ChatGPT / Gemini so the flowers come out closer to the real ones.':'この画像をChatGPT・Geminiに添付すると、写真の花に近い色・形で作られます。';
     }
     $('gpt-prompt').value=buildGptPrompt(has);
-    $('gpt-steps').textContent=has&&!r?(en?'Making the reference image…':'見本画像を作っています…'):gptHowTo();
-    $('gpt-sum').textContent=en?'Show the instructions':'指示文を見る';
-    var sh=has&&useShare();
-    $('gpt-go').textContent=sh?(en?'Send to ChatGPT':'ChatGPTに送る'):(en?'Create in ChatGPT':'ChatGPTで作る');
-    $('gpt-go-gem').textContent=sh?(en?'Send to Gemini':'Geminiに送る'):(en?'Create in Gemini':'Geminiで作る');
-    $('gpt-go').disabled=has&&!r;$('gpt-go-gem').disabled=has&&!r;
-    $('gpt-save').hidden=!r;
-    $('gpt-save').textContent=en?'Save reference image':'見本画像を保存';
+    renderGflow();
   }
   function openGpt(){
+    gStep={saved:false,copied:false};
     fillGptModal();
     $('gpt-modal').hidden=false;$('gpt-modal').classList.add('open');
     if(refKey()&&!readyRef()){
@@ -2264,26 +2256,39 @@ textarea{resize:vertical;line-height:1.5}
     }
   }
   function closeGpt(){$('gpt-modal').classList.remove('open');$('gpt-modal').hidden=true;}
-  // メインのボタン：見本画像ができていればそのまま送る（まだなら確認画面を開く）
-  // 送った回数を「これまでの生成回数」に数える
-  $('to-chatgpt').addEventListener('click',function(){if(sendToGpt('chatgpt'))bumpGenCount();else openGpt();});
-  $('to-gemini').addEventListener('click',function(){if(sendToGpt('gemini'))bumpGenCount();else openGpt();});
-  $('gpt-check').addEventListener('click',openGpt);
+  $('to-image').addEventListener('click',openGpt);
   $('gpt-close').addEventListener('click',closeGpt);
   $('gpt-cancel').addEventListener('click',closeGpt);
   $('gpt-modal').addEventListener('click',function(e){if(e.target===$('gpt-modal'))closeGpt();});
-  $('gpt-copy').addEventListener('click',function(){
-    copyPrompt($('gpt-prompt').value).then(function(ok){
-      toast(ok?L('指示文をコピーしました。','gpt.copied'):L('コピーできませんでした。指示文を選択してコピーしてください。','gpt.copyfail'));
-    });
-  });
+  // ① 見本画像の保存（スマホは共有画面から「画像を保存」、パソコンはダウンロード）
   $('gpt-save').addEventListener('click',function(){
     var r=readyRef();if(!r)return;
+    var en=(LANG==='en');
+    if(phoneLike()&&canShareFile(r.file)){
+      navigator.share({files:[r.file]}).then(function(){gStep.saved=true;renderGflow();})
+        .catch(function(e){
+          if(e&&e.name==='AbortError')return;
+          download(r.url,'flowers-reference-'+Date.now()+'.jpg');gStep.saved=true;renderGflow();
+        });
+      return;
+    }
     download(r.url,'flowers-reference-'+Date.now()+'.jpg');
-    toast((LANG==='en')?'Reference image saved.':'見本画像を保存しました。');
+    gStep.saved=true;renderGflow();
+    toast(en?'Reference image saved.':'見本画像を保存しました。');
   });
-  $('gpt-go').addEventListener('click',function(){if(sendToGpt('chatgpt')){bumpGenCount();closeGpt();}});
-  $('gpt-go-gem').addEventListener('click',function(){if(sendToGpt('gemini')){bumpGenCount();closeGpt();}});
+  // ② 指示文のコピー
+  $('gpt-copy').addEventListener('click',function(){
+    copyPrompt($('gpt-prompt').value).then(function(ok){
+      // 自動でコピーできなかったときは、指示文を選択した状態にして手でコピーしてもらう（③へは進めるようにする）
+      if(!ok){var ta=$('gpt-prompt');try{ta.focus();ta.select();ta.setSelectionRange(0,ta.value.length);}catch(e){}}
+      gStep.copied=true;renderGflow();
+      toast(ok?L('指示文をコピーしました。','gpt.copied')
+        :((LANG==='en')?'Could not copy automatically. The instructions are selected — copy them (long-press → Copy, or ⌘C).':'自動でコピーできませんでした。指示文を選択したので、長押し→「コピー」（または⌘C）でコピーしてください。'),6000);
+    });
+  });
+  // ③
+  $('gpt-go').addEventListener('click',function(){openAi('chatgpt');});
+  $('gpt-go-gem').addEventListener('click',function(){openAi('gemini');});
 
   /* ===== スタッフ設定の画面 ===== */
   function updateStaffUI(){
