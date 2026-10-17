@@ -14,7 +14,8 @@
     {
       "jp": "バラ",
       "en": "roses",
-      "photo": "images/flowers/roses-1792130106287.jpg"
+      "photo": "images/flowers/roses-1792130106287.jpg",
+      "price": 500
     },
     {
       "jp": "ガーベラ",
