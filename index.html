@@ -160,6 +160,25 @@ textarea{resize:vertical;line-height:1.5}
 .color-grid button[aria-pressed="true"]{border-color:var(--sage-deep);box-shadow:0 0 0 2px var(--sage-deep)}
 .color-grid .sw{width:18px;height:18px;flex:0 0 18px}
 /* 花材ボード（上部・全幅） */
+.cat-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:2px 0 10px;margin-bottom:6px}
+@media (max-width:560px){.cat-tabs{gap:6px}.cat-tab{font-size:13px;padding:8px 12px}}
+.cat-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:inherit;font-size:14px;padding:9px 16px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.cat-tab:hover{border-color:var(--sage)}
+.cat-tab[aria-selected="true"]{background:var(--sage-deep);border-color:var(--sage-deep);color:#fff}
+.cat-n{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--rose);color:#fff;font-size:11.5px;line-height:20px;text-align:center;font-weight:600}
+.cartbar{position:sticky;bottom:10px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px;padding:10px 12px 10px 16px;border:1px solid var(--sage);border-radius:14px;background:var(--surface);box-shadow:0 10px 26px -14px var(--shadow)}
+.cartbar-txt{font-size:13px;line-height:1.6;color:var(--ink)}
+.fb-empty{grid-column:1/-1;text-align:center;color:var(--ink-soft);font-size:13px;padding:26px 10px;border:1px dashed var(--line);border-radius:12px}
+.of-items{margin-bottom:16px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper)}
+.of-items h3{margin:0 0 8px;font-size:14px;font-family:var(--font-display)}
+.of-items table{width:100%;border-collapse:collapse;font-size:13px}
+.of-items th,.of-items td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.of-items th{font-weight:600;color:var(--ink-soft);font-size:11.5px}
+.of-items .num{text-align:right;white-space:nowrap}
+.of-items input.q{width:56px;padding:5px 6px;text-align:right}
+.of-items .cat{display:block;font-size:10.5px;color:var(--sage-deep)}
+.of-items .rm{border:0;background:none;color:var(--ink-soft);cursor:pointer;font-size:15px;padding:2px 4px}
+.of-items .tot{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;font-size:14px;font-weight:600}
 .fboard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:20px;box-shadow:0 10px 30px -24px var(--shadow)}
 .fboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .fboard-head h2{margin:0 0 4px;font-family:var(--font-display);font-size:18px;color:var(--ink)}
@@ -250,12 +269,14 @@ textarea{resize:vertical;line-height:1.5}
 
   <!-- ===== 生成モード ===== -->
   <section id="gen-panel">
+    <!-- ===== カテゴリーのタブ（生花・アーティフィシャル・ドライフラワー・観葉植物・グッズ） ===== -->
+    <nav class="cat-tabs" id="cat-tabs" role="tablist" aria-label="カテゴリー"></nav>
     <!-- ===== 花材ボード（入荷中の花・上部全幅） ===== -->
     <div class="fboard">
       <div class="fboard-head">
         <div>
-          <h2><span data-i18n="fb.title">入荷中の花から選ぶ</span> <span class="staff-badge" id="staff-badge" hidden>共有モード</span></h2>
-          <div class="note" data-i18n="fb.note">使いたい花をタップで選んでください（複数OK）。<br>写真のない花は、申し訳ございませんが現在入荷しておりません。</div>
+          <h2><span id="fb-title">入荷中の花から選ぶ</span> <span class="staff-badge" id="staff-badge" hidden>共有モード</span></h2>
+          <div class="note" id="fb-note">使いたい花をタップで選んでください（複数OK）。<br>写真のない花は、申し訳ございませんが現在入荷しておりません。</div>
         </div>
         <div class="fboard-actions">
           <span class="note" id="fb-count"></span>
@@ -276,15 +297,21 @@ textarea{resize:vertical;line-height:1.5}
       <div class="fb-grid" id="fb-grid"></div>
       <!-- 花材の追加は、共有モード（🔑）のスマホだけに表示 -->
       <div class="fb-addrow" id="fb-addrow" hidden>
-        <input type="text" id="fb-new" data-i18n-ph="fb.newph" placeholder="入荷した花を追加（例：スカビオサ）">
+        <input type="text" id="fb-new" placeholder="入荷した花を追加（例：スカビオサ）">
         <input type="text" id="fb-price" inputmode="numeric" data-i18n-ph="fb.priceph" placeholder="金額（例：300）" autocomplete="off">
         <button type="button" class="btn ghost sm" id="fb-add" data-i18n="fb.add">追加</button>
       </div>
       </div>
       <button type="button" class="btn ghost sm" id="fb-toggle" hidden></button>
+      <!-- 選んだ商品（全カテゴリー）→ 注文フォームへ -->
+      <div class="cartbar" id="cartbar" hidden>
+        <div class="cartbar-txt" id="cartbar-txt"></div>
+        <button type="button" class="btn primary sm" id="cart-order">注文フォームへ</button>
+      </div>
     </div>
 
-    <div class="layout">
+    <!-- 画像づくり（生花のタブだけ表示） -->
+    <div class="layout" id="gen-layout">
       <div class="panel">
         <div class="field"><div class="label" data-i18n="lbl.type">種類</div>
           <div id="types" style="display:flex;flex-wrap:wrap;gap:8px"></div>
@@ -400,10 +427,11 @@ textarea{resize:vertical;line-height:1.5}
     </div>
     <form id="order-form">
       <div class="sheet-body">
+        <div class="of-items" id="of-items" hidden></div>
         <div class="of-img-wrap">
           <img id="of-img" alt="イメージ画像">
-          <div class="note" style="text-align:center" data-i18n="om.imgnote">※ 画像はイメージです（AIで作った画像は、実際の花束と若干異なります）。</div>
-          <label class="btn ghost sm" for="of-file" data-i18n="om.changeimg">画像を変更（別の画像を添付）</label>
+          <div class="note" id="of-imgnote" style="text-align:center" data-i18n="om.imgnote">※ 画像はイメージです（AIで作った画像は、実際の花束と若干異なります）。</div>
+          <label class="btn ghost sm" for="of-file" id="of-imglbl">画像を変更（別の画像を添付）</label>
           <input type="file" id="of-file" accept="image/*" class="sr-only">
         </div>
         <div class="of-grid">
@@ -517,6 +545,7 @@ textarea{resize:vertical;line-height:1.5}
     <div class="sheet-body">
       <div class="field"><div class="label" id="fedit-lbl-name">花の名前</div><input type="text" id="fedit-name" autocomplete="off"></div>
       <p class="note" id="fedit-name-note" style="margin:6px 0 0" hidden></p>
+      <div class="field" style="margin-top:16px"><div class="label" id="fedit-lbl-cat">カテゴリー</div><select id="fedit-cat"></select></div>
       <div class="field" style="margin-top:16px"><div class="label" id="fedit-lbl-price">金額（円）</div>
         <input type="text" id="fedit-price" inputmode="numeric" autocomplete="off" placeholder="例：300">
       </div>
@@ -1028,9 +1057,79 @@ textarea{resize:vertical;line-height:1.5}
   });
 
   /* ===== 注文フォーム ===== */
+  /* ご注文の商品（全カテゴリーで選んだもの）。数量は注文フォームで変えられる */
+  var orderQty={};
+  function itemUnit(f){
+    if(f.price!==''&&f.price!==undefined&&f.price!==null)return {p:Number(f.price),est:false};
+    if(catOf(f)==='fresh')return {p:DEFAULT_STEM,est:true}; // 生花は金額未入力なら1本500円の目安
+    return null;
+  }
+  function defaultQty(f){
+    if(catOf(f)==='fresh'){
+      var pl=budgetPlan();
+      if(pl&&!pl.invalid&&!pl.generic&&!pl.short){var it=pl.items.filter(function(x){return x.f===f;})[0];if(it&&it.n)return it.n;}
+    }
+    return 1;
+  }
+  function orderLines(){
+    return selectedItems().map(function(f){
+      var u=itemUnit(f),q=orderQty[f.id];if(q===undefined)q=defaultQty(f);
+      return {f:f,unit:u,qty:q,sub:u?u.p*q:null};
+    });
+  }
+  function orderTotal(lines){return lines.reduce(function(a,l){return a+(l.sub||0);},0);}
+  // メール・印刷用の文章（お店向けなので日本語の名前）
+  function orderItemsText(){
+    var lines=orderLines().filter(function(l){return l.qty>0;});
+    if(!lines.length)return '';
+    var out=lines.map(function(l){
+      var c=CATS.filter(function(x){return x.k===catOf(l.f);})[0].ja;
+      var unit=catOf(l.f)==='fresh'?'本':'点';
+      return '・['+c+'] '+l.f.jp+'　'+(l.unit?(l.unit.p.toLocaleString('ja-JP')+'円'+(l.unit.est?'（目安）':'')+' × '+l.qty+unit+' = '+(l.sub).toLocaleString('ja-JP')+'円'):('価格未設定 × '+l.qty+unit));
+    });
+    out.push('合計'+(lines.some(function(l){return !l.unit||l.unit.est;})?'（目安）':'')+'：'+orderTotal(lines).toLocaleString('ja-JP')+'円');
+    return out.join('\n');
+  }
+  function renderOrderItems(){
+    var box=$('of-items'),lines=orderLines(),en=(LANG==='en');
+    box.hidden=!lines.length;
+    if(!lines.length){box.innerHTML='';return;}
+    var h='<h3>'+(en?'Items you chose':'ご注文の商品')+'</h3><table><thead><tr><th>'+(en?'Item':'商品')+'</th><th class="num">'+(en?'Price':'単価')+'</th><th class="num">'+(en?'Qty':'数量')+'</th><th class="num">'+(en?'Subtotal':'小計')+'</th><th></th></tr></thead><tbody>';
+    lines.forEach(function(l){
+      h+='<tr data-id="'+esc(l.f.id)+'"><td><span class="cat">'+esc(catName(catOf(l.f)))+'</span>'+esc(fname(l.f))+'</td>'
+        +'<td class="num">'+(l.unit?(priceText(l.unit.p)+(l.unit.est?(en?'*':'※'):'')):(en?'Ask':'要相談'))+'</td>'
+        +'<td class="num"><input class="q" type="text" inputmode="numeric" value="'+l.qty+'" aria-label="'+(en?'Quantity':'数量')+'"></td>'
+        +'<td class="num sub">'+(l.sub!==null?priceText(l.sub):'—')+'</td>'
+        +'<td><button type="button" class="rm" title="'+(en?'Remove':'外す')+'">×</button></td></tr>';
+    });
+    h+='</tbody></table><div class="tot"><span>'+(en?'Total':'合計')+'</span><span id="of-total"></span></div>';
+    var est=lines.some(function(l){return l.unit&&l.unit.est;}),ask=lines.some(function(l){return !l.unit;});
+    if(est||ask)h+='<div class="note" style="margin-top:6px">'+(est?(en?'* Fresh flowers without a price are estimated at ¥500 per stem. ':'※ 金額未入力の生花は1本500円の目安です。'):'')+(ask?(en?'Items without a price: please ask us.':'価格未設定の商品は、お問い合わせください。'):'')+'</div>';
+    box.innerHTML=h;
+    var updTotal=function(){var ls=orderLines();$('of-total').textContent=priceText(orderTotal(ls))+((est||ask)?(en?' (estimate)':'（目安）'):'');};
+    Array.prototype.forEach.call(box.querySelectorAll('tr[data-id]'),function(tr){
+      var id=tr.getAttribute('data-id'),f=fById(id);
+      var qi=tr.querySelector('input.q');
+      qi.addEventListener('input',function(){
+        var v=parsePrice(qi.value);var q=(v===''||v===null)?0:Math.min(v,999);
+        orderQty[id]=q;var u=itemUnit(f);
+        tr.querySelector('.sub').textContent=u?priceText(u.p*q):'—';updTotal();
+      });
+      tr.querySelector('.rm').addEventListener('click',function(){
+        var a=picked.indexOf(id);if(a>=0)picked.splice(a,1);var b=cart.indexOf(id);if(b>=0)cart.splice(b,1);
+        delete orderQty[id];renderBoard();fbCount();renderFsel();renderOrderItems();
+      });
+    });
+    updTotal();
+  }
   function openOrder(src){
-    if(!src)return;
-    $('of-img').src=src;
+    var has=!!src,en=(LANG==='en');
+    if(!has&&!selectedItems().length)return;
+    orderQty={};
+    $('of-img').hidden=!has;$('of-imgnote').hidden=!has;
+    if(has)$('of-img').src=src;else $('of-img').removeAttribute('src');
+    $('of-imglbl').textContent=has?L('画像を変更（別の画像を添付）','om.changeimg'):(en?'Attach an image (optional)':'画像を添付（任意）');
+    renderOrderItems();
     ['of-name','of-contact','of-email','of-date','of-qty','of-budget','of-use','of-note'].forEach(function(id){$(id).value='';});
     var bg=parsePrice($('budget').value);if(bg)$('of-budget').value=priceText(bg);
     $('order-modal').hidden=false;$('order-modal').classList.add('open');
@@ -1039,23 +1138,25 @@ textarea{resize:vertical;line-height:1.5}
   $('to-order').addEventListener('click',function(){
     openOrder(gen.lastSrc,$('title').value.trim(),$('price').value.trim());
   });
+  $('cart-order').addEventListener('click',function(){openOrder(null);});
   $('of-close').addEventListener('click',closeOrder);
   $('of-cancel').addEventListener('click',closeOrder);
   $('order-modal').addEventListener('click',function(e){if(e.target===$('order-modal'))closeOrder();});
   $('of-file').addEventListener('change',function(e){
     var f=e.target.files&&e.target.files[0];if(!f)return;
-    var r=new FileReader();r.onload=function(){$('of-img').src=r.result;};r.readAsDataURL(f);
+    var r=new FileReader();r.onload=function(){$('of-img').src=r.result;$('of-img').hidden=false;$('of-imgnote').hidden=false;$('of-imglbl').textContent=L('画像を変更（別の画像を添付）','om.changeimg');};r.readAsDataURL(f);
     e.target.value='';
   });
   $('of-print').addEventListener('click',function(){
     var row=function(label,val){return '<tr><th>'+esc(label)+'</th><td>'+(val?esc(val):'&nbsp;')+'</td></tr>';};
-    var note=$('of-note').value.trim();
+    var note=$('of-note').value.trim(),items=orderItemsText(),hasImg=!$('of-img').hidden&&$('of-img').getAttribute('src');
     var html=''+
       '<div class="psheet">'+
       '<h1>ご注文書</h1><div class="psub">FLOWER ORDER SHEET</div>'+
       '<div class="prow">'+
-        '<div class="pimg"><img src="'+$('of-img').src+'" alt=""><div class="cap">※イメージ写真です</div></div>'+
+        (hasImg?('<div class="pimg"><img src="'+$('of-img').src+'" alt=""><div class="cap">※イメージ写真です</div></div>'):'')+
         '<table>'+
+          (items?('<tr><th>ご注文の商品</th><td>'+esc(items).replace(/\n/g,'<br>')+'</td></tr>'):'')+
           row('お客様のお名前',$('of-name').value.trim())+
           row('ご連絡先',$('of-contact').value.trim())+
           row('お渡し・お届け日',$('of-date').value.trim())+
@@ -1088,7 +1189,9 @@ textarea{resize:vertical;line-height:1.5}
       '■用途：'+v('of-use'),
       '■ご要望・備考：',v('of-note'),''
     ];
-    var src=$('of-img').src;
+    var items=orderItemsText();
+    if(items)lines.splice(2,0,'■ご注文の商品：',items,'');
+    var src=$('of-img').hidden?'':$('of-img').src;
     if(src&&src.indexOf('http')===0){
       lines.push('■イメージ画像（下記リンクからご確認いただけます）：',src,'');
     }else if(src){
@@ -1121,8 +1224,10 @@ textarea{resize:vertical;line-height:1.5}
     var btn=$('of-send'),old=btn.textContent;btn.disabled=true;btn.textContent='送信中…';
     try{
       var v=function(id){return ($(id).value||'').trim();};
-      var src=$('of-img').src;
+      var src=$('of-img').hidden?'':$('of-img').src;
+      var items=orderItemsText();
       var payload={
+        'ご注文の商品':items||'（なし）',
         'お名前':v('of-name'),
         'ご連絡先':v('of-contact'),
         'お渡し・お届け日':v('of-date'),
@@ -1130,7 +1235,7 @@ textarea{resize:vertical;line-height:1.5}
         'ご予算':v('of-budget'),
         '用途':v('of-use'),
         'ご要望・備考':v('of-note'),
-        'イメージ画像':(src&&src.indexOf('http')===0)?src:'（画像は本文リンクなし。別途ご確認ください）',
+        'イメージ画像':(src&&src.indexOf('http')===0)?src:(src?'（画像は本文リンクなし。別途ご確認ください）':'（なし）'),
         '_subject':'【ご注文】'+(v('of-name')||'お花のご注文'),
         '_template':'table',
         '_captcha':'false'
@@ -1278,6 +1383,7 @@ textarea{resize:vertical;line-height:1.5}
     if(f.localColor===undefined)f.localColor='';
     if(f.localEn===undefined)f.localEn='';
     if(f.sharedColor===undefined)f.sharedColor='';
+    if(!f.cat)f.cat='fresh';
     if(f.localPrice===undefined)f.localPrice='';
     if(f.sharedPrice===undefined)f.sharedPrice='';
     // 金額：共有モードのスマホは全員共通の金額、それ以外は「この端末で入れた金額 → なければ共通の金額」
@@ -1517,7 +1623,7 @@ textarea{resize:vertical;line-height:1.5}
   }
   function ensureColors(){
     flowers.forEach(function(f){
-      if(!f.photo||autoColors[f.photo]!==undefined)return;
+      if(!f.photo||catOf(f)!=='fresh'||autoColors[f.photo]!==undefined)return;
       detectColor(f.photo).then(updateColorChips);
     });
   }
@@ -1528,7 +1634,11 @@ textarea{resize:vertical;line-height:1.5}
     if(!picked.length){el.innerHTML='<span class="note">'+L('未選択（定番の花で作ります）','fsel.none')+'</span>';return;}
     el.innerHTML=picked.map(function(id){var f=fById(id);if(!f)return '';var t=(LANG==='en')?descEn(f).replace(/\b\w/g,function(c){return c.toUpperCase();}):descJa(f);return '<span class="chip sm" aria-pressed="true" style="pointer-events:none">'+esc(t)+'</span>';}).join('');
   }
-  function fbCount(){$('fb-count').textContent=picked.length?((LANG==='en')?(picked.length+' selected'):(picked.length+'種類を選択中')):L('タップで花を選んでください','fb.hint');}
+  function fbCount(){
+    var n=selInCat(curCat).length,en=(LANG==='en');
+    $('fb-count').textContent=n?(en?(n+' selected'):(n+(curCat==='fresh'?'種類':'点')+'を選択中'))
+      :(curCat==='fresh'?L('タップで花を選んでください','fb.hint'):(en?'Tap to choose':'タップで選んでください'));
+  }
 
   var photoTarget=null;
   function resizeSmall(file,maxSize,quality){
@@ -1546,7 +1656,7 @@ textarea{resize:vertical;line-height:1.5}
     var data=await ghEditContent(function(d){
       d.flowers=d.flowers||[];
       var t=d.flowers.filter(function(x){return x.jp===fl.jp;})[0];
-      if(t)t.photo=path;else d.flowers.push({jp:fl.jp,en:fl.en||fl.jp,photo:path});
+      if(t)t.photo=path;else{var nf={jp:fl.jp,en:fl.en||fl.jp,photo:path};if(catOf(fl)!=='fresh')nf.cat=catOf(fl);d.flowers.push(nf);}
     },'入荷: '+fl.jp);
     previewPhotos[fl.jp]=dataUrl;
     flowers.forEach(function(x){if(x.jp===fl.jp)x.localPhoto='';});
@@ -1569,6 +1679,7 @@ textarea{resize:vertical;line-height:1.5}
   function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
   // 写真がある花＝入荷中、写真がない花＝入荷なし
   function oosMessage(f){
+    if(catOf(f)!=='fresh')return (LANG==='en')?('Sorry, '+fname(f)+' is out of stock.'):('申し訳ございません。「'+f.jp+'」は現在在庫がございません。');
     return (LANG==='en')?('Sorry, '+fname(f)+' is not in stock at the moment.')
                         :('申し訳ございません。「'+f.jp+'」は現在入荷しておりません。');
   }
@@ -1586,38 +1697,102 @@ textarea{resize:vertical;line-height:1.5}
   }
   var jaCollator=(window.Intl&&Intl.Collator)?new Intl.Collator('ja'):null;
   function cmpYomi(a,b){var x=yomi(a.jp),y=yomi(b.jp);return jaCollator?jaCollator.compare(x,y):(x<y?-1:x>y?1:0);}
+  /* ===== カテゴリー（タブ） =====
+     生花で選んだ花は画像づくり用（picked）、それ以外で選んだ商品は cart に入れる。
+     タブを切り替えても、どちらの選択もそのまま残る。 */
+  var CATS=[{k:'fresh',ja:'生花',en:'Fresh flowers',ex:'スカビオサ'},
+            {k:'artificial',ja:'アーティフィシャル',en:'Artificial flowers',ex:'アーティフィシャル ローズ'},
+            {k:'dried',ja:'ドライフラワー',en:'Dried flowers',ex:'スワッグ'},
+            {k:'plant',ja:'観葉植物',en:'Houseplants',ex:'パキラ'},
+            {k:'goods',ja:'グッズ',en:'Goods',ex:'フラワーベース'}];
+  var CATKEY='hanataba_cat';
+  var cart=[];
+  var curCat='fresh';
+  try{curCat=localStorage.getItem(CATKEY)||'fresh';}catch(e){}
+  function catBy(k){for(var i=0;i<CATS.length;i++){if(CATS[i].k===k)return CATS[i];}return null;}
+  if(!catBy(curCat))curCat='fresh';
+  function catOf(f){return (f&&f.cat)||'fresh';}
+  function catName(k){var c=catBy(k)||CATS[0];return (LANG==='en')?c.en:c.ja;}
+  function selOf(f){return catOf(f)==='fresh'?picked:cart;}
+  function selInCat(k){return k==='fresh'?picked.slice():cart.filter(function(id){return catOf(fById(id))===k;});}
+  function selectedItems(){return picked.concat(cart).map(fById).filter(Boolean);}
+  function renderTabs(){
+    var nav=$('cat-tabs');if(!nav)return;nav.innerHTML='';
+    CATS.forEach(function(c){
+      var n=selInCat(c.k).length;
+      var b=document.createElement('button');b.type='button';b.className='cat-tab';b.setAttribute('role','tab');
+      b.setAttribute('aria-selected',c.k===curCat?'true':'false');
+      b.innerHTML=esc(catName(c.k))+(n?('<span class="cat-n">'+n+'</span>'):'');
+      b.addEventListener('click',function(){setCat(c.k);});
+      nav.appendChild(b);
+    });
+  }
+  function setCat(k){
+    if(!catBy(k))return;
+    curCat=k;try{localStorage.setItem(CATKEY,k);}catch(e){}
+    renderBoard();fbCount();
+  }
+  // カテゴリーごとの見出し・説明・追加欄
+  function renderBoardHead(){
+    var en=(LANG==='en'),fresh=(curCat==='fresh'),c=catBy(curCat);
+    $('fb-title').textContent=fresh?L('入荷中の花から選ぶ','fb.title'):(en?('Choose from '+c.en):(c.ja+'から選ぶ'));
+    $('fb-note').innerHTML=fresh?L('使いたい花をタップで選んでください（複数OK）。<br>写真のない花は、申し訳ございませんが現在入荷しておりません。','fb.note')
+      :(en?'Tap the items you would like (you can choose several).<br>Items without a photo are currently out of stock.'
+          :'ご希望の商品をタップで選んでください（複数OK）。<br>写真のない商品は、申し訳ございませんが現在在庫がございません。');
+    $('fb-new').placeholder=fresh?L('入荷した花を追加（例：スカビオサ）','fb.newph'):(en?('Add an item (e.g. '+c.en+')'):('商品を追加（例：'+c.ex+'）'));
+    // 画像づくりは生花のタブだけ
+    $('gen-layout').hidden=!fresh;
+  }
+  // 選んだ商品（全カテゴリー）のまとめと「注文フォームへ」
+  function renderCartbar(){
+    var items=selectedItems(),bar=$('cartbar'),en=(LANG==='en');
+    bar.hidden=!items.length;
+    if(!items.length)return;
+    var parts=CATS.map(function(c){var n=items.filter(function(f){return catOf(f)===c.k;}).length;return n?(catName(c.k)+' '+n+(en?'':'点')):'';}).filter(Boolean);
+    $('cartbar-txt').textContent=(en?'Selected: ':'選択中：')+parts.join(en?', ':'・');
+    $('cart-order').textContent=en?'Go to order form':'注文フォームへ';
+  }
   function sortedFlowers(){
-    var inS=flowers.filter(function(f){return !!f.photo;}).sort(cmpYomi);
-    var outS=flowers.filter(function(f){return !f.photo;}).sort(cmpYomi);
+    var list=flowers.filter(function(f){return catOf(f)===curCat;});
+    var inS=list.filter(function(f){return !!f.photo;}).sort(cmpYomi);
+    var outS=list.filter(function(f){return !f.photo;}).sort(cmpYomi);
     return {inStock:inS,out:outS};
   }
   function renderBoard(){
     var g=$('fb-grid');g.innerHTML='';
     // 入荷なしになった花は選択から外す
-    picked=picked.filter(function(id){var f=fById(id);return f&&f.photo;});
+    picked=picked.filter(function(id){var f=fById(id);return f&&f.photo&&catOf(f)==='fresh';});
+    cart=cart.filter(function(id){var f=fById(id);return f&&f.photo&&catOf(f)!=='fresh';});
+    var fresh=(curCat==='fresh'),en=(LANG==='en');
     var so=sortedFlowers();
+    if(!so.inStock.length&&!so.out.length){
+      var em=document.createElement('div');em.className='fb-empty';
+      em.textContent=staffMode()?(en?'No items yet. Add them with the box below.':'まだ商品がありません。下の欄から追加してください。')
+                                :(en?'Coming soon.':'ただいま準備中です。');
+      g.appendChild(em);
+    }
     so.inStock.concat(so.out).forEach(function(f,idx){
       // 入荷なしの花の前に区切りの見出しを入れる
       if(idx===so.inStock.length&&so.out.length){
         var sep=document.createElement('div');sep.className='fb-sep';
-        sep.textContent=(LANG==='en')?'Not in stock at the moment':'現在入荷なし';
+        sep.textContent=fresh?(en?'Not in stock at the moment':'現在入荷なし'):(en?'Out of stock':'現在在庫なし');
         g.appendChild(sep);
       }
       var inStock=!!f.photo;
       var c=document.createElement('div');c.className='fcard'+(inStock?'':' out');
-      c.setAttribute('aria-pressed',picked.indexOf(f.id)>=0?'true':'false');
+      c.setAttribute('aria-pressed',selOf(f).indexOf(f.id)>=0?'true':'false');
       var pick=document.createElement('button');pick.type='button';pick.className='pick';
       if(!inStock)pick.setAttribute('aria-disabled','true');
       pick.innerHTML=(inStock?('<img class="ph" src="'+f.photo+'" alt="">')
-        :('<div class="noimg"><span class="oos">'+L('現在入荷なし','fb.oos')+'</span></div>'))
+        :('<div class="noimg"><span class="oos">'+(fresh?L('現在入荷なし','fb.oos'):(en?'Out of stock':'在庫なし'))+'</span></div>'))
         +'<span class="nm">'+esc(fname(f))+'</span>'
         +(f.price!==''&&f.price!==undefined?('<span class="pr">'+esc(priceText(f.price))+'</span>'):'');
       pick.addEventListener('click',function(){
         if(!f.photo){toast(oosMessage(f));return;}
-        var i=picked.indexOf(f.id);
-        if(i>=0)picked.splice(i,1);else picked.push(f.id);
+        var arr=selOf(f),i=arr.indexOf(f.id);
+        if(i>=0)arr.splice(i,1);else arr.push(f.id);
         c.setAttribute('aria-pressed',i>=0?'false':'true');
-        fbCount();renderFsel();
+        fbCount();renderFsel();renderTabs();renderCartbar();
       });
       var chk=document.createElement('span');chk.className='chk';chk.textContent='✓';
       var tools=document.createElement('div');tools.className='fcard-tools';
@@ -1645,7 +1820,7 @@ textarea{resize:vertical;line-height:1.5}
       be.addEventListener('click',function(){openFlowerEdit(f);});
       tools.appendChild(be);
       c.appendChild(pick);c.appendChild(chk);
-      if(inStock){
+      if(inStock&&catOf(f)==='fresh'){
         var cr=document.createElement('div');cr.className='fcolor-row';
         var cb=document.createElement('button');cb.type='button';cb.className='fcolor';cb.setAttribute('data-fid',f.id);
         paintChip(cb,f);
@@ -1656,6 +1831,7 @@ textarea{resize:vertical;line-height:1.5}
       g.appendChild(c);
     });
     ensureColors();
+    renderBoardHead();renderTabs();renderCartbar();
     if(typeof renderOverview==='function'&&$('fb-ov'))renderOverview();
   }
   // 花材の削除（編集画面の「この花を削除」から）
@@ -1667,6 +1843,7 @@ textarea{resize:vertical;line-height:1.5}
         delete previewPhotos[f.jp];
         var i=flowers.indexOf(f);if(i>=0)flowers.splice(i,1);
         var pi=picked.indexOf(f.id);if(pi>=0)picked.splice(pi,1);
+        var ci=cart.indexOf(f.id);if(ci>=0)cart.splice(ci,1);
         applyShared(data);
       }).then(function(ok){if(ok){toast('「'+f.jp+'」を削除しました（全員に反映）。');done();}});
       return;
@@ -1674,6 +1851,7 @@ textarea{resize:vertical;line-height:1.5}
     if(!confirm((LANG==='en')?('Remove '+fname(f)+' from the board?'):(f.jp+' を花材から削除しますか？')))return;
     var i=flowers.indexOf(f);if(i>=0)flowers.splice(i,1);
     var pi=picked.indexOf(f.id);if(pi>=0)picked.splice(pi,1);
+    var ci=cart.indexOf(f.id);if(ci>=0)cart.splice(ci,1);
     persistFlowers();renderBoard();fbCount();renderFsel();done();
   }
   $('fb-file').addEventListener('change',function(){
@@ -1689,7 +1867,7 @@ textarea{resize:vertical;line-height:1.5}
             if(!ok)return;
             toast('「'+sf.jp+'」を全員に共有しました（お客さまの画面には1〜2分で反映されます）。');
             var nf=fById('s:'+sf.jp)||fById(sf.id);
-            if(nf&&nf.photo)detectColor(nf.photo).then(function(){updateColorChips();openColorPicker(nf,true);});
+            if(nf&&nf.photo&&catOf(nf)==='fresh')detectColor(nf.photo).then(function(){updateColorChips();openColorPicker(nf,true);});
           });
       });
       return;
@@ -1697,7 +1875,7 @@ textarea{resize:vertical;line-height:1.5}
     resizeSmall(f).then(function(src){
       if(!src){toast('写真を読み込めませんでした。');return;}
       var fl=fById(target);if(fl){fl.localPhoto=src;fl.photo=src;persistFlowers();renderBoard();fbCount();renderFsel();toast(L('写真を登録しました（入荷中になりました）。','ts.saved.photo'));
-        detectColor(src).then(function(){updateColorChips();openColorPicker(fl,true);});}
+        if(catOf(fl)==='fresh')detectColor(src).then(function(){updateColorChips();openColorPicker(fl,true);});}
     });
   });
   function jpToEn(n){
@@ -1711,15 +1889,17 @@ textarea{resize:vertical;line-height:1.5}
     var pr=parsePrice($('fb-price').value);
     if(pr===null){toast((LANG==='en')?'Please enter the price as a number (e.g. 300).':'金額は数字で入力してください（例：300）。');$('fb-price').focus();return;}
     if(staffMode()){
-      if(flowers.some(function(x){return x.jp===n;})){toast('「'+n+'」はすでにあります。');return;}
+      var dupS=flowers.filter(function(x){return x.jp===n;})[0];
+      if(dupS){toast('「'+n+'」はすでにあります（'+catName(catOf(dupS))+'）。別の名前にしてください。');return;}
       ghRun('花材を追加中',async function(){
-        var data=await ghEditContent(function(d){d.flowers=d.flowers||[];if(!d.flowers.some(function(x){return x.jp===n;})){var nf={jp:n,en:jpToEn(n),photo:''};if(pr!=='')nf.price=pr;d.flowers.push(nf);}},'花材を追加: '+n+(pr!==''?('（'+pr+'円）'):''));
+        var data=await ghEditContent(function(d){d.flowers=d.flowers||[];if(!d.flowers.some(function(x){return x.jp===n;})){var nf={jp:n,en:jpToEn(n),photo:''};if(curCat!=='fresh')nf.cat=curCat;if(pr!=='')nf.price=pr;d.flowers.push(nf);}},(curCat==='fresh'?'花材を追加: ':('商品を追加（'+catName(curCat)+'）: '))+n+(pr!==''?('（'+pr+'円）'):''));
         $('fb-new').value='';$('fb-price').value='';applyShared(data);
       }).then(function(ok){if(ok)toast('「'+n+'」を追加しました（全員に反映）。');});
       return;
     }
-    if(flowers.some(function(x){return x.jp===n;})){toast((LANG==='en')?(n+' is already on the board.'):('「'+n+'」はすでにあります。'));return;}
-    flowers.push(normFlower({id:'f'+Date.now().toString(36),jp:n,en:jpToEn(n),photo:'',localPrice:pr}));
+    var dupL=flowers.filter(function(x){return x.jp===n;})[0];
+    if(dupL){toast((LANG==='en')?(n+' already exists ('+catName(catOf(dupL))+').'):('「'+n+'」はすでにあります（'+catName(catOf(dupL))+'）。別の名前にしてください。'));return;}
+    flowers.push(normFlower({id:'f'+Date.now().toString(36),jp:n,en:jpToEn(n),photo:'',localPrice:pr,cat:curCat}));
     $('fb-new').value='';$('fb-price').value='';persistFlowers();renderBoard();toast((LANG==='en')?(n+' added.'):(n+' を追加しました。'));
   });
   /* ===== 全体写真（入荷中の花をまとめて撮った写真） =====
@@ -1733,9 +1913,9 @@ textarea{resize:vertical;line-height:1.5}
     return staffMode()?sh:(ovLocal||sh);
   }
   function renderOverview(){
-    var src=ovSrc(),en=(LANG==='en'),n=flowers.filter(function(f){return !!f.photo;}).length;
+    var src=(curCat==='fresh')?ovSrc():'',en=(LANG==='en'),n=flowers.filter(function(f){return !!f.photo&&catOf(f)==='fresh';}).length;
     $('fb-ov').hidden=!src;
-    $('ov-add').hidden=!!src;
+    $('ov-add').hidden=!!src||curCat!=='fresh';
     $('ov-add').textContent=en?'Overview photo':'全体写真';
     if(src){
       if($('ov-img').getAttribute('src')!==src)$('ov-img').src=src;
@@ -1800,7 +1980,9 @@ textarea{resize:vertical;line-height:1.5}
   // 花材ボードは画面上部に常に表示
   $('budget').addEventListener('input',renderBudget);
   $('mainflower').addEventListener('change',renderBudget);
-  $('fb-clear').addEventListener('click',function(){picked=[];renderBoard();fbCount();renderFsel();});
+  $('fb-clear').addEventListener('click',function(){
+    if(curCat!=='fresh'){cart=cart.filter(function(id){return catOf(fById(id))!==curCat;});renderBoard();fbCount();return;}
+    picked=[];renderBoard();fbCount();renderFsel();});
   $('fb-new').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();$('fb-add').click();}});
   $('fb-price').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();$('fb-add').click();}});
   renderBoard();fbCount();renderFsel();
@@ -2030,7 +2212,7 @@ textarea{resize:vertical;line-height:1.5}
       var localOnly=flowers.filter(function(f){return !f.shared;});
       var shared=d.flowers.map(function(f,i){
         var prev=localAll.filter(function(x){return x.jp===f.jp;})[0];
-        return normFlower({id:'s:'+f.jp,jp:f.jp,en:f.en||f.jp,shared:true,
+        return normFlower({id:'s:'+f.jp,jp:f.jp,en:f.en||f.jp,shared:true,cat:f.cat||'fresh',
           localPhoto:prev?(prev.localPhoto||''):'', sharedPhoto:f.photo||'',
           localColor:prev?(prev.localColor||''):'', sharedColor:f.color||'', localEn:prev?(prev.localEn||''):'',
           localPrice:prev&&prev.localPrice!==undefined?prev.localPrice:'', sharedPrice:sharedPriceOf(f)});
@@ -2434,7 +2616,7 @@ textarea{resize:vertical;line-height:1.5}
     editTarget=f;
     var en=(LANG==='en'), sharedOnly=(f.shared&&!staffMode());
     $('fedit-title').textContent=en?('Edit — '+fname(f)):('「'+f.jp+'」の編集');
-    $('fedit-lbl-name').textContent=en?'Flower name (Japanese)':'花の名前';
+    $('fedit-lbl-name').textContent=catOf(f)==='fresh'?(en?'Flower name (Japanese)':'花の名前'):(en?'Item name (Japanese)':'商品名');
     $('fedit-lbl-price').textContent=en?'Price (yen)':'金額（円）';
     $('fedit-name').value=f.jp;
     // 全員共通の花の名前は、共有モードのスマホでだけ変えられる（ここで変えても元に戻ってしまうため）
@@ -2442,6 +2624,10 @@ textarea{resize:vertical;line-height:1.5}
     $('fedit-name-note').hidden=!sharedOnly;
     $('fedit-name-note').textContent=en?'The name of a shared flower can only be changed on a staff device (sharing mode).'
       :'全員共通の花なので、名前は「共有モード」のスマホから変更してください。';
+    var cs=$('fedit-cat');cs.innerHTML='';
+    CATS.forEach(function(c){var o=document.createElement('option');o.value=c.k;o.textContent=en?c.en:c.ja;cs.appendChild(o);});
+    cs.value=catOf(f);cs.disabled=sharedOnly;
+    $('fedit-lbl-cat').textContent=en?'Category':'カテゴリー';
     $('fedit-price').value=(f.price===''||f.price===undefined)?'':String(f.price);
     $('fedit-price').placeholder=en?'e.g. 300':'例：300';
     $('fedit-note').innerHTML=en?'Leave the price empty to show no price.'
@@ -2449,7 +2635,7 @@ textarea{resize:vertical;line-height:1.5}
         +(staffMode()&&f.shared?'<br>※共有モードなので、変更は<b>全員に反映</b>されます。':''));
     $('fedit-save').textContent=en?'Save':'保存';
     $('fedit-cancel').textContent=en?'Close':'閉じる';
-    $('fedit-del').textContent=en?'Delete this flower':'この花を削除';
+    $('fedit-del').textContent=catOf(f)==='fresh'?(en?'Delete this flower':'この花を削除'):(en?'Delete this item':'この商品を削除');
     $('fedit-modal').hidden=false;$('fedit-modal').classList.add('open');
     setTimeout(function(){(sharedOnly?$('fedit-price'):$('fedit-name')).focus();},50);
   }
@@ -2463,11 +2649,16 @@ textarea{resize:vertical;line-height:1.5}
     var pr=parsePrice($('fedit-price').value);
     if(!n){toast(L('花材の名前を入力してください。','ts.fb.name'));return;}
     if(pr===null){toast(en?'Please enter the price as a number (e.g. 300).':'金額は数字で入力してください（例：300）。');return;}
-    var old=f.jp;
+    var old=f.jp,oc=catOf(f),nc=$('fedit-cat').disabled?oc:$('fedit-cat').value;
     if(n!==old&&flowers.some(function(x){return x!==f&&x.jp===n;})){toast(en?(n+' is already on the board.'):('「'+n+'」はすでにあります。'));return;}
+    // カテゴリーを変えたら、その商品の選択は外す（選び直してもらう）
+    var dropSel=function(){var a=picked.indexOf(f.id);if(a>=0)picked.splice(a,1);var b=cart.indexOf(f.id);if(b>=0)cart.splice(b,1);};
+    var catMsg=(nc!==oc)?(en?(' Moved to '+catName(nc)+'.'):('（'+catName(nc)+'へ移動）')):'';
+    var priceChanged=String(pr)!==String((f.price===undefined||f.price===null)?'':f.price);
     var msgDone=en?(fname(f)+' updated.')
       :(n!==old?('「'+old+'」を「'+n+'」に変更しました（'+(pr!==''?priceText(pr):'金額なし')+'）。')
-              :('「'+n+'」の金額を'+(pr!==''?(priceText(pr)+'にしました。'):'なしにしました。')));
+       :priceChanged?('「'+n+'」の金額を'+(pr!==''?(priceText(pr)+'にしました。'):'なしにしました。'))
+       :(nc!==oc?('「'+n+'」を移動しました。'):('「'+n+'」を保存しました。')));
     if(staffMode()&&f.shared){
       ghRun('変更を保存中',async function(){
         var data=await ghEditContent(function(d){
@@ -2479,18 +2670,22 @@ textarea{resize:vertical;line-height:1.5}
             t.en=renamedEn(t.en,old,n);t.jp=n;
           }
           if(pr==='')delete t.price;else t.price=pr;
-        },'編集: '+old+(n!==old?(' → '+n):'')+'（'+(pr!==''?(pr+'円'):'金額なし')+'）');
+          if(nc==='fresh')delete t.cat;else t.cat=nc;
+        },'編集: '+old+(n!==old?(' → '+n):'')+'（'+(pr!==''?(pr+'円'):'金額なし')+(nc!==oc?('・'+catName(nc)):'')+'）');
+        if(nc!==oc)dropSel();
         if(n!==old){
           // 選択中・プレビュー写真も新しい名前に付け替える
           picked=picked.map(function(id){return id==='s:'+old?('s:'+n):id;});
+          cart=cart.map(function(id){return id==='s:'+old?('s:'+n):id;});
           if(previewPhotos[old]){previewPhotos[n]=previewPhotos[old];delete previewPhotos[old];}
           f.jp=n;f.id='s:'+n;
         }
         applyShared(data);
-      }).then(function(ok){if(ok){closeFlowerEdit();toast(msgDone+(en?'':'（全員に反映）'));}});
+      }).then(function(ok){if(ok){closeFlowerEdit();toast(msgDone+catMsg+(en?'':'（全員に反映）'));}});
       return;
     }
     if(n!==old){f.en=renamedEn(f.en,old,n);f.jp=n;}
+    if(nc!==oc){f.cat=nc;dropSel();msgDone+=catMsg;}
     f.localPrice=pr;normFlower(f);
     persistFlowers();renderBoard();fbCount();renderFsel();closeFlowerEdit();
     toast(msgDone);
