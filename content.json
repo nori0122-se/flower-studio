@@ -155,6 +155,12 @@
       "en": "calla lilies",
       "photo": "images/flowers/calla-lilies-1792555997798.jpg",
       "price": 550
+    },
+    {
+      "jp": "テスト",
+      "en": "テスト",
+      "photo": "",
+      "cat": "artificial"
     }
   ],
   "gallery": [
