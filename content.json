@@ -35,7 +35,8 @@
       "jp": "ひまわり",
       "en": "sunflowers",
       "photo": "images/flowers/sunflowers-1793329736643.jpg",
-      "price": 350
+      "price": 350,
+      "color": "青"
     },
     {
       "jp": "あじさい",
