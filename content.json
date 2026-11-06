@@ -242,6 +242,12 @@
       "photo": "images/flowers/anthurium-1793859505064.jpg",
       "price": 600,
       "color": "緑"
+    },
+    {
+      "jp": "アスチルベ",
+      "en": "astilbe",
+      "photo": "",
+      "price": 300
     }
   ],
   "gallery": [
