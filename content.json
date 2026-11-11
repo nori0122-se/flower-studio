@@ -306,6 +306,12 @@
       "photo": "images/flowers/flower-1794031683495.jpg",
       "cat": "goods",
       "price": 2800
+    },
+    {
+      "jp": "チョコレートコスモス",
+      "en": "cosmos",
+      "photo": "",
+      "price": 200
     }
   ],
   "gallery": [
