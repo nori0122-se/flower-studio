@@ -1229,22 +1229,14 @@ textarea{resize:vertical;line-height:1.5}
     var blob=await new Promise(function(res,rej){cv.toBlob(function(b){b?res(b):rej(new Error('blob'));},'image/jpeg',0.85);});
     return new File([blob],'order-image-'+Date.now()+'.jpg',{type:'image/jpeg'});
   }
-  // FormSubmit へ「ふつうのフォーム送信」（画像の添付つき）。画面はそのまま、見えない枠の中で送る
-  function postWithAttachment(payload,file){
-    return new Promise(function(resolve){
-      var name='fs-sink-'+Date.now();
-      var ifr=document.createElement('iframe');ifr.name=name;ifr.style.display='none';
-      var form=document.createElement('form');
-      form.method='POST';form.action='https://formsubmit.co/'+ORDER_EMAIL;form.enctype='multipart/form-data';form.target=name;form.style.display='none';
-      Object.keys(payload).forEach(function(k){var t=document.createElement('textarea');t.name=k;t.value=payload[k];form.appendChild(t);});
-      var fi=document.createElement('input');fi.type='file';fi.name='attachment';
-      var dt=new DataTransfer();dt.items.add(file);fi.files=dt.files;form.appendChild(fi);
-      var done=false,finish=function(){if(done)return;done=true;setTimeout(function(){form.remove();ifr.remove();},3000);resolve();};
-      ifr.addEventListener('load',finish);
-      setTimeout(finish,15000);
-      document.body.appendChild(ifr);document.body.appendChild(form);
-      form.submit();
-    });
+  // FormSubmit へ「ふつうのフォーム送信」と同じ形（multipart）で、画像を添付して送る。
+  // iPhone の Safari ではファイル欄に画像を入れる方法（DataTransfer）がうまく働かないことがあるため、FormData でまとめて送る。
+  async function postWithAttachment(payload,file){
+    var fd=new FormData();
+    Object.keys(payload).forEach(function(k){fd.append(k,payload[k]);});
+    fd.append('attachment',file,file.name);
+    // 別のサイトへの送信なので返事は読めない（no-cors）。送れなかったとき（通信エラー）は例外になる
+    await fetch('https://formsubmit.co/'+ORDER_EMAIL,{method:'POST',body:fd,mode:'no-cors'});
   }
   async function sendAuto(){
     var btn=$('of-send'),old=btn.textContent;btn.disabled=true;btn.textContent='送信中…';
@@ -1269,7 +1261,7 @@ textarea{resize:vertical;line-height:1.5}
       var cust=v('of-email');
       if(cust&&cust.indexOf('@')>0)payload['_cc']=cust;
       // 画像があるときは「ふつうのフォーム送信」で画像をメールに添付する（裏で送る方式では画像を付けられないため）
-      if(src&&typeof DataTransfer!=='undefined'){
+      if(src){
         var file=null;
         try{file=await imgToFile(src);}catch(e){file=null;}
         if(file){
