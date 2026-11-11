@@ -1176,7 +1176,7 @@ textarea{resize:vertical;line-height:1.5}
   });
 
   // メール送信
-  var ORDER_EMAIL='mar30.shiori@gmail.com';
+  var ORDER_EMAIL='flowerplus.okinawa03@gmail.com';
   function buildMail(skipCcNote){
     var v=function(id){return ($(id).value||'').trim();};
     var lines=[
@@ -1220,6 +1220,32 @@ textarea{resize:vertical;line-height:1.5}
     toast('メールアプリを開きました。内容を確認して送信してください。');
   }
   // 全自動送信（FormSubmit・登録不要）
+  // 注文フォームの画像を、メールに添付できる JPEG ファイルにする（長い辺は最大1600px）
+  async function imgToFile(src){
+    var img=await loadImg(corsSrc(src));
+    var max=1600,w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+    if(w>max||h>max){var r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}
+    var cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);
+    var blob=await new Promise(function(res,rej){cv.toBlob(function(b){b?res(b):rej(new Error('blob'));},'image/jpeg',0.85);});
+    return new File([blob],'order-image-'+Date.now()+'.jpg',{type:'image/jpeg'});
+  }
+  // FormSubmit へ「ふつうのフォーム送信」（画像の添付つき）。画面はそのまま、見えない枠の中で送る
+  function postWithAttachment(payload,file){
+    return new Promise(function(resolve){
+      var name='fs-sink-'+Date.now();
+      var ifr=document.createElement('iframe');ifr.name=name;ifr.style.display='none';
+      var form=document.createElement('form');
+      form.method='POST';form.action='https://formsubmit.co/'+ORDER_EMAIL;form.enctype='multipart/form-data';form.target=name;form.style.display='none';
+      Object.keys(payload).forEach(function(k){var t=document.createElement('textarea');t.name=k;t.value=payload[k];form.appendChild(t);});
+      var fi=document.createElement('input');fi.type='file';fi.name='attachment';
+      var dt=new DataTransfer();dt.items.add(file);fi.files=dt.files;form.appendChild(fi);
+      var done=false,finish=function(){if(done)return;done=true;setTimeout(function(){form.remove();ifr.remove();},3000);resolve();};
+      ifr.addEventListener('load',finish);
+      setTimeout(finish,15000);
+      document.body.appendChild(ifr);document.body.appendChild(form);
+      form.submit();
+    });
+  }
   async function sendAuto(){
     var btn=$('of-send'),old=btn.textContent;btn.disabled=true;btn.textContent='送信中…';
     try{
@@ -1242,13 +1268,39 @@ textarea{resize:vertical;line-height:1.5}
       };
       var cust=v('of-email');
       if(cust&&cust.indexOf('@')>0)payload['_cc']=cust;
+      // 画像があるときは「ふつうのフォーム送信」で画像をメールに添付する（裏で送る方式では画像を付けられないため）
+      if(src&&typeof DataTransfer!=='undefined'){
+        var file=null;
+        try{file=await imgToFile(src);}catch(e){file=null;}
+        if(file){
+          payload['イメージ画像']='このメールに添付しています（'+file.name+'）'+(src.indexOf('http')===0?('\n元の画像：'+src):'');
+          await postWithAttachment(payload,file);
+          toast('注文を送信しました（イメージ画像も添付しました）。');
+          closeOrder();
+          return;
+        }
+        payload['イメージ画像']=(src.indexOf('http')===0)?src:'（画像を添付できませんでした。別途ご確認ください）';
+      }
       var res=await fetch('https://formsubmit.co/ajax/'+ORDER_EMAIL,{
         method:'POST',
         headers:{'Content-Type':'application/json','Accept':'application/json'},
         body:JSON.stringify(payload)
       });
       if(!res.ok)throw new Error('status '+res.status);
-      toast('注文を送信しました。（初回のみ、届いた確認メールの承認が必要です）');
+      // FormSubmit の返事を確認する（届いていないのに「送信しました」と出さないため）
+      var j=null;try{j=await res.json();}catch(e){}
+      var okFlag=j&&(j.success===true||j.success==='true');
+      var msg=(j&&j.message)?String(j.message):'';
+      if(!okFlag){
+        if(/activat/i.test(msg)){
+          // 送信先アドレスでまだ承認していない（初回）
+          toast('まだ送信先の承認が済んでいません。'+ORDER_EMAIL+' に届いた FormSubmit のメール（迷惑メールも確認）で「Activate Form」を押してから、もう一度送信してください。',12000);
+        }else{
+          toast('送信できませんでした（'+(msg||'不明なエラー')+'）。「メールで送信（手動）」もお使いいただけます。',12000);
+        }
+        return;
+      }
+      toast('注文を送信しました。');
       closeOrder();
     }catch(err){
       toast('送信できませんでした。通信状況を確認して再度お試しください（予備の「メールで送信（手動）」も使えます）。');
