@@ -1,7 +1,7 @@
 {
   "_説明": "このファイルを編集すると、サイトの内容が全員分いっぺんに変わります。使い方は README.md を見てください。",
   "order": {
-    "email": "mar30.shiori@gmail.com"
+    "email": "flowerplus.okinawa03@gmail.com"
   },
   "image": {
     "endpoint": "https://white-rain-8f89.hironori-m-0122.workers.dev"
@@ -14,33 +14,46 @@
     {
       "jp": "バラ",
       "en": "roses",
-      "photo": "",
-      "price": 500
+      "photo": ""
     },
     {
       "jp": "ガーベラ",
       "en": "gerbera daisies",
-      "photo": "images/flowers/gerbera-daisies-1793855673374.jpg",
-      "color": "濃いピンク",
-      "price": 250
+      "photo": ""
+    },
+    {
+      "jp": "ユリ",
+      "en": "lilies",
+      "photo": ""
     },
     {
       "jp": "カーネーション",
       "en": "carnations",
-      "photo": "images/flowers/carnations-1793330869314.jpg",
-      "price": 350,
-      "color": "クリーム"
+      "photo": ""
+    },
+    {
+      "jp": "チューリップ",
+      "en": "tulips",
+      "photo": ""
     },
     {
       "jp": "ひまわり",
       "en": "sunflowers",
-      "photo": "",
-      "price": 350,
-      "color": "黄色"
+      "photo": ""
     },
     {
       "jp": "あじさい",
       "en": "hydrangeas",
+      "photo": ""
+    },
+    {
+      "jp": "芍薬",
+      "en": "peonies",
+      "photo": ""
+    },
+    {
+      "jp": "ラナンキュラス",
+      "en": "ranunculus",
       "photo": ""
     },
     {
@@ -51,9 +64,7 @@
     {
       "jp": "トルコキキョウ",
       "en": "lisianthus",
-      "photo": "",
-      "price": 990,
-      "color": "赤"
+      "photo": ""
     },
     {
       "jp": "かすみ草",
@@ -68,302 +79,38 @@
     {
       "jp": "コスモス",
       "en": "cosmos",
-      "photo": "",
-      "color": "ボルドー",
-      "price": 280
+      "photo": ""
     },
     {
       "jp": "マム（菊）",
       "en": "chrysanthemums",
-      "photo": "images/flowers/chrysanthemums-1794363746429.jpg",
-      "price": 300,
-      "color": "オレンジ"
+      "photo": ""
     },
     {
-      "jp": "アルストロメリア",
-      "en": "alstroemeria",
-      "photo": "images/flowers/alstroemeria-1794363608703.jpg",
-      "price": 650,
-      "color": "オレンジ"
+      "jp": "アネモネ",
+      "en": "anemones",
+      "photo": ""
     },
     {
-      "jp": "ハイブリッドスターチス",
-      "en": "ハイブリッドスターチス",
-      "photo": "images/flowers/flower-1792555843613.jpg",
-      "color": "淡いピンク",
-      "price": 700
+      "jp": "ミモザ",
+      "en": "mimosa",
+      "photo": ""
     },
     {
-      "jp": "モカラ",
-      "en": "モカラ",
-      "photo": "",
-      "color": "濃いピンク",
-      "price": 350
+      "jp": "ラベンダー",
+      "en": "lavender",
+      "photo": ""
     },
     {
-      "jp": "パスタガーベラ",
-      "en": "gerbera daisies",
-      "photo": "images/flowers/gerbera-daisies-1793848223247.jpg",
-      "price": 400,
-      "color": "淡いピンク"
+      "jp": "ユーカリ",
+      "en": "eucalyptus greenery",
+      "photo": ""
     },
     {
-      "jp": "カーネーション(オレンジ)",
-      "en": "carnations",
-      "photo": "images/flowers/carnations-1794363639944.jpg",
-      "price": 350,
-      "color": "ピンク"
-    },
-    {
-      "jp": "クジャクソウ",
-      "en": "クジャクソウ",
-      "photo": "",
-      "price": 400,
-      "color": "ラベンダー"
-    },
-    {
-      "jp": "カラー(ワイン)",
-      "en": "calla lilies",
-      "photo": "",
-      "price": 550,
-      "color": "ボルドー"
-    },
-    {
-      "jp": "カラー(黄色)",
-      "en": "calla lilies",
-      "photo": "",
-      "price": 550
-    },
-    {
-      "jp": "カラー(白)",
-      "en": "calla lilies",
-      "photo": "images/flowers/calla-lilies-1792555997798.jpg",
-      "price": 550
-    },
-    {
-      "jp": "テスト",
-      "en": "テスト",
-      "photo": "images/flowers/flower-1792714859633.jpg",
-      "cat": "artificial",
-      "price": 6000
-    },
-    {
-      "jp": "テスト（ドライ）",
-      "en": "テスト（ドライ）",
-      "photo": "",
-      "cat": "dried"
-    },
-    {
-      "jp": "ILU×Flower+コラボTシャツ　ホワイト(L)",
-      "en": "ILU×Flower+コラボTシャツ　ホワイト(L)",
-      "photo": "images/flowers/ilu-flower-t-l-1792724096513.jpg",
-      "cat": "goods",
-      "price": 4860
-    },
-    {
-      "jp": "ILU×Flower+コラボTシャツ　ベージュ(XL)",
-      "en": "ILU×Flower+コラボTシャツ　ベージュ(XL)",
-      "photo": "images/flowers/ilu-flower-t-xl-1792724238807.jpg",
-      "cat": "goods",
-      "price": 4860
-    },
-    {
-      "jp": "ガーベラ（オレンジ）",
-      "en": "gerbera daisies",
-      "photo": "images/flowers/gerbera-daisies-1794363699727.jpg",
-      "price": 280,
-      "color": "オレンジ"
-    },
-    {
-      "jp": "カーネーション（濃いピンク）",
-      "en": "carnations",
-      "photo": "",
-      "price": 350,
-      "color": "濃いピンク"
-    },
-    {
-      "jp": "レースフラワー",
-      "en": "white lace flower",
-      "photo": "images/flowers/white-lace-flower-1793330926605.jpg",
-      "color": "白"
-    },
-    {
-      "jp": "ケイトウ",
-      "en": "celosia",
-      "photo": "images/flowers/celosia-1794363801043.jpg",
-      "price": 300,
-      "color": "赤"
-    },
-    {
-      "jp": "アマランサス（紫）",
-      "en": "amaranthus",
-      "photo": "",
-      "price": 500,
-      "color": "ボルドー"
-    },
-    {
-      "jp": "SPストック（紫）",
-      "en": "stock flowers",
-      "photo": "",
-      "price": 650
-    },
-    {
-      "jp": "メラレウカ",
-      "en": "メラレウカ",
-      "photo": "",
-      "price": 250
-    },
-    {
-      "jp": "マトリカリア",
-      "en": "matricaria",
-      "photo": "images/flowers/matricaria-1793786754026.jpg",
-      "color": "白"
-    },
-    {
-      "jp": "ヤリケイトウ",
-      "en": "celosia",
-      "photo": "",
-      "color": "白",
-      "price": 330
-    },
-    {
-      "jp": "デンファレ",
-      "en": "dendrobium orchids",
-      "photo": "images/flowers/dendrobium-orchids-1793786839254.jpg",
-      "color": "白"
-    },
-    {
-      "jp": "アンスリューム",
-      "en": "anthurium",
-      "photo": "",
-      "price": 600
-    },
-    {
-      "jp": "アンスリューム(グリーン)",
-      "en": "anthurium",
-      "photo": "images/flowers/anthurium-1793859505064.jpg",
-      "price": 600,
-      "color": "緑"
-    },
-    {
-      "jp": "アスチルベ",
-      "en": "astilbe",
-      "photo": "",
-      "price": 300
-    },
-    {
-      "jp": "フラワーベース（縦長）",
-      "en": "フラワーベース（縦長）",
-      "photo": "images/flowers/flower-1794031321736.jpg",
-      "cat": "goods",
-      "price": 1980
-    },
-    {
-      "jp": "フラワーベース（中）",
-      "en": "フラワーベース（中）",
-      "photo": "images/flowers/flower-1794031380534.jpg",
-      "cat": "goods",
-      "price": 4400
-    },
-    {
-      "jp": "フラワーベース（2way）",
-      "en": "フラワーベース（2way）",
-      "photo": "images/flowers/2way-1794031438634.jpg",
-      "cat": "goods",
-      "price": 2500
-    },
-    {
-      "jp": "フラワーベース（細め）",
-      "en": "フラワーベース（細め）",
-      "photo": "images/flowers/flower-1794031488903.jpg",
-      "cat": "goods",
-      "price": 3300
-    },
-    {
-      "jp": "フラワーベース（1輪用）",
-      "en": "フラワーベース（1輪用）",
-      "photo": "images/flowers/1-1794031523699.jpg",
-      "cat": "goods",
-      "price": 1100
-    },
-    {
-      "jp": "フラワーベース（小）",
-      "en": "フラワーベース（小）",
-      "photo": "images/flowers/flower-1794031556231.jpg",
-      "cat": "goods",
-      "price": 1300
-    },
-    {
-      "jp": "フラワーベース（台付）",
-      "en": "フラワーベース（台付）",
-      "photo": "images/flowers/flower-1794031630355.jpg",
-      "cat": "goods",
-      "price": 2200
-    },
-    {
-      "jp": "フラワーベース（口広め）",
-      "en": "フラワーベース（口広め）",
-      "photo": "images/flowers/flower-1794031683495.jpg",
-      "cat": "goods",
-      "price": 2800
-    },
-    {
-      "jp": "チョコレートコスモス",
-      "en": "cosmos",
-      "photo": "images/flowers/cosmos-1794363871701.jpg",
-      "price": 200,
-      "color": "ボルドー"
-    },
-    {
-      "jp": "オンシジューム",
-      "en": "オンシジューム",
-      "photo": "images/flowers/flower-1794364005722.jpg",
-      "price": 450
+      "jp": "グリーン（葉物）",
+      "en": "mixed greenery",
+      "photo": ""
     }
   ],
-  "gallery": [
-    {
-      "title": "",
-      "price": "",
-      "photo": "images/gallery/mv59o2fux8rm.jpg",
-      "kind": "photo"
-    },
-    {
-      "title": "",
-      "price": "",
-      "photo": "images/gallery/mv59nr1n6j3s.jpg",
-      "kind": "photo"
-    },
-    {
-      "title": "",
-      "price": "",
-      "photo": "images/gallery/mv59jgigqj8s.jpg",
-      "kind": "photo"
-    },
-    {
-      "title": "",
-      "price": "",
-      "photo": "images/gallery/mv59je562fpi.jpg",
-      "kind": "photo"
-    },
-    {
-      "title": "",
-      "price": "",
-      "photo": "images/gallery/mv59ir8wjlmr.jpg",
-      "kind": "photo"
-    },
-    {
-      "title": "",
-      "price": "",
-      "photo": "images/gallery/mv59g3javzqe.jpg",
-      "kind": "photo"
-    },
-    {
-      "title": "モカラ×アンスリウム×HBスターチス",
-      "price": "",
-      "photo": "images/gallery/mv59fv1b65lk.jpg",
-      "kind": "photo"
-    }
-  ],
-  "overview": "images/overview/overview-1794363590561.jpg"
+  "gallery": []
 }
