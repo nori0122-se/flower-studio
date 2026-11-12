@@ -158,6 +158,12 @@
       "photo": "images/flowers/gerbera-daisies-1794457789529.jpg",
       "price": 400,
       "color": "淡い黄色"
+    },
+    {
+      "jp": "ガーベラ4",
+      "en": "gerbera daisies",
+      "photo": "",
+      "price": 300
     }
   ],
   "gallery": []
