@@ -207,7 +207,8 @@
       "jp": "レースフラワー",
       "en": "white lace flower",
       "photo": "images/flowers/white-lace-flower-1794458233722.jpg",
-      "price": 330
+      "price": 330,
+      "color": "白"
     }
   ],
   "gallery": []
