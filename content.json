@@ -209,6 +209,12 @@
       "photo": "images/flowers/white-lace-flower-1794458233722.jpg",
       "price": 330,
       "color": "白"
+    },
+    {
+      "jp": "トルコキキョウ(ピンク)",
+      "en": "lisianthus",
+      "photo": "",
+      "price": 900
     }
   ],
   "gallery": []
