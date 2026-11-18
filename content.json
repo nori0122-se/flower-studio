@@ -256,7 +256,8 @@
       "jp": "ベロニカ",
       "en": "veronica",
       "photo": "images/flowers/veronica-1794967411119.jpg",
-      "price": 300
+      "price": 300,
+      "color": "白"
     }
   ],
   "gallery": []
