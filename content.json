@@ -245,6 +245,12 @@
       "photo": "images/flowers/matricaria-1794967305039.jpg",
       "price": 330,
       "color": "黄色"
+    },
+    {
+      "jp": "デコラマム",
+      "en": "chrysanthemums",
+      "photo": "",
+      "price": 500
     }
   ],
   "gallery": []
