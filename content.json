@@ -224,6 +224,12 @@
       "photo": "images/flowers/calla-lilies-1794967167385.jpg",
       "price": 500,
       "color": "紫"
+    },
+    {
+      "jp": "アンスリューム(テラ)",
+      "en": "anthurium",
+      "photo": "",
+      "price": 380
     }
   ],
   "gallery": []
