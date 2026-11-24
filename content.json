@@ -259,6 +259,12 @@
       "photo": "",
       "price": 300,
       "color": "白"
+    },
+    {
+      "jp": "カーネーション4",
+      "en": "carnations",
+      "photo": "",
+      "price": 350
     }
   ],
   "gallery": []
