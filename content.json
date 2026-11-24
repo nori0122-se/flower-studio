@@ -266,6 +266,12 @@
       "photo": "images/flowers/carnations-1795490040200.jpg",
       "price": 350,
       "color": "ボルドー"
+    },
+    {
+      "jp": "マリーゴールド",
+      "en": "gold accents",
+      "photo": "",
+      "price": 350
     }
   ],
   "gallery": []
