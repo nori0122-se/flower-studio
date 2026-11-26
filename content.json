@@ -296,7 +296,8 @@
       "jp": "スギ",
       "en": "スギ",
       "photo": "images/flowers/flower-1795662328434.jpg",
-      "price": 900
+      "price": 900,
+      "color": "緑"
     }
   ],
   "gallery": []
