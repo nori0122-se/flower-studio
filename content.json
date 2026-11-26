@@ -290,6 +290,12 @@
       "en": "roses",
       "photo": "",
       "price": 350
+    },
+    {
+      "jp": "スギ",
+      "en": "スギ",
+      "photo": "",
+      "price": 900
     }
   ],
   "gallery": []
