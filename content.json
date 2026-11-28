@@ -29,10 +29,11 @@
       "photo": ""
     },
     {
-      "jp": "カーネーション",
+      "jp": "SPカーネーション",
       "en": "carnations",
       "photo": "images/flowers/carnations-1795836899259.jpg",
-      "color": "淡いピンク"
+      "color": "淡いピンク",
+      "price": 350
     },
     {
       "jp": "チューリップ",
